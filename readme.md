@@ -12,7 +12,6 @@ APS Explorer is a web application for exploring and selecting datasets based on 
 - [Configuration](#configuration)
 - [Adapting or Extending](#adapting-or-extending)
 - [Scripts](#scripts)
-- [License](#license)
 
 ## Features
 
