@@ -35,17 +35,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (queryOptions.tab) {
     const tabName = queryOptions.tab;
-    if (tabName === "compareAlgorithms") {
+    if (tabName === "recommendDatasets") {
+      recommendDatasetsBtn.click();
+    } else if (tabName === "compareAlgorithms") {
       compareAlgorithmsBtn.click();
     } else if (tabName === "compareDatasets") {
       compareDatasetsBtn.click();
     } else if (tabName === "aps") {
       apsTabBtn.click();
-    } else if (tabName === "recommendDatasets") {
-      recommendDatasetsBtn.click();
     }
   } else {
-    apsTabBtn.click();
+    recommendDatasetsBtn.click();
   }
 
   const versionNumberElement = document.getElementById("version-number");
