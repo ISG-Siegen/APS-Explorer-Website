@@ -15,6 +15,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const compareAlgorithmsBtn = document.getElementById("compare-algo-btn");
   const compareDatasetsBtn = document.getElementById("compare-datasets-btn");
   const apsTabBtn = document.getElementById("aps-tab-btn");
+  const recommendDatasetsBtn = document.getElementById(
+    "recommend-datasets-btn",
+  );
 
   apsTabBtn.addEventListener("click", async (e) => {
     await loadTab("./tabs/aps/aps.html");
@@ -25,7 +28,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   compareDatasetsBtn.addEventListener("click", async (e) => {
     await loadTab("./tabs/compareDatasets/compareDatasets.html");
   });
-
+  recommendDatasetsBtn.addEventListener("click", async (e) => {
+    await loadTab("./tabs/recommendDatasets/recommendDatasets.html");
+  });
   const queryOptions = readQueryString(window.location.search);
 
   if (queryOptions.tab) {
@@ -36,6 +41,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       compareDatasetsBtn.click();
     } else if (tabName === "aps") {
       apsTabBtn.click();
+    } else if (tabName === "recommendDatasets") {
+      recommendDatasetsBtn.click();
     }
   } else {
     apsTabBtn.click();
