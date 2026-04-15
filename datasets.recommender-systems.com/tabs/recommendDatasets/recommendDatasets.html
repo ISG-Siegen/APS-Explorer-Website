@@ -1,1 +1,53 @@
-test
+<div
+  class="tab-pane fade show active"
+  id="dataset-info-tab-pane"
+  role="tabpanel"
+  aria-labelledby="dataset-info-tab"
+  tabindex="0"
+>
+  <h2>Dataset Recommendation</h2>
+  <p>
+    Lorem ipsum dolor sit amet consectetur adipisicing elit. Excepturi
+    laboriosam saepe numquam nihil asperiores, quam labore magni! Officiis animi
+    molestias quam explicabo, nisi non eaque vel veritatis voluptas, nobis
+    excepturi.
+  </p>
+
+  <div
+    class="accordion"
+    id="accordionDatasetInformation"
+    style="margin-bottom: 1rem"
+  >
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingOne">
+        <button
+          class="accordion-button collapsed acc-btn-icon"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseOne"
+          aria-expanded="false"
+          aria-controls="collapseOne"
+        >
+          <span>Dataset Filter</span>
+          <span id="dataset-comparison-header" style="margin-left: auto"
+            >(All selected)</span
+          >
+        </button>
+      </h2>
+      <div
+        id="collapseOne"
+        class="accordion-collapse collapse"
+        aria-labelledby="headingOne"
+        data-bs-parent="#accordionDatasetInformation"
+      >
+        <div
+          id="dataset-comparison-filter"
+          class="accordion-body"
+          style="display: flex; flex-wrap: wrap; gap: 12px"
+        >
+          <!-- Dataset filter checkboxes -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
