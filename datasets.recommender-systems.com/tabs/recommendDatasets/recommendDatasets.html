@@ -7,11 +7,48 @@
 >
   <h2>Dataset Recommendation</h2>
   <p>
-    Lorem ipsum dolor sit amet consectetur adipisicing elit. Excepturi
-    laboriosam saepe numquam nihil asperiores, quam labore magni! Officiis animi
-    molestias quam explicabo, nisi non eaque vel veritatis voluptas, nobis
-    excepturi.
+    Select optional mandatory datasets, set your desired total number, and
+    optional basic filters. The system will randomly fill in the missing
+    datasets and you can display the final selection directly in the APS.
   </p>
+
+  <div
+    class="accordion"
+    id="accordionRequiredDatasets"
+    style="margin-bottom: 1rem"
+  >
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingRequiredDatasets">
+        <button
+          class="accordion-button collapsed acc-btn-icon"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseRequiredDatasets"
+          aria-expanded="false"
+          aria-controls="collapseRequiredDatasets"
+        >
+          <span>Required Datasets</span>
+          <span id="required-dataset-header" style="margin-left: auto"
+            >(None selected)</span
+          >
+        </button>
+      </h2>
+      <div
+        id="collapseRequiredDatasets"
+        class="accordion-collapse collapse"
+        aria-labelledby="headingRequiredDatasets"
+        data-bs-parent="#accordionRequiredDatasets"
+      >
+        <div
+          id="required-dataset-filter"
+          class="accordion-body"
+          style="display: flex; flex-wrap: wrap; gap: 12px"
+        >
+          <!-- Required dataset checkboxes -->
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div
     class="accordion"
@@ -48,6 +85,107 @@
           <!-- Dataset filter checkboxes -->
         </div>
       </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 1rem">
+    <div class="card-body">
+      <h5 class="card-title">Recommendation Settings</h5>
+      <div
+        style="
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 12px;
+        "
+      >
+        <div>
+          <label for="recommend-target-count" class="form-label"
+            >Total dataset count</label
+          >
+          <input
+            id="recommend-target-count"
+            class="form-control"
+            type="number"
+            min="1"
+            step="1"
+            value="5"
+          />
+        </div>
+        <div>
+          <label for="recommend-feedback-type" class="form-label"
+            >Feedback Type</label
+          >
+          <select id="recommend-feedback-type" class="form-select">
+            <option value="all" selected>All</option>
+          </select>
+        </div>
+        <div>
+          <label for="recommend-min-interactions" class="form-label"
+            >Min Interactions</label
+          >
+          <input
+            id="recommend-min-interactions"
+            class="form-control"
+            type="number"
+            min="0"
+            step="1"
+            placeholder="0"
+          />
+        </div>
+        <div>
+          <label for="recommend-max-interactions" class="form-label"
+            >Max Interactions</label
+          >
+          <input
+            id="recommend-max-interactions"
+            class="form-control"
+            type="number"
+            min="0"
+            step="1"
+            placeholder="No limit"
+          />
+        </div>
+      </div>
+
+      <div
+        style="margin-top: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap"
+      >
+        <button
+          id="recommend-generate-btn"
+          type="button"
+          class="btn btn-primary"
+        >
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Generate
+          Recommendation
+        </button>
+        <button
+          id="recommend-open-aps-btn"
+          type="button"
+          class="btn btn-outline-primary"
+          disabled
+        >
+          <i class="fa-solid fa-chart-line"></i> Open In APS
+        </button>
+        <button
+          id="recommend-share-btn"
+          type="button"
+          class="btn btn-outline-secondary"
+        >
+          <i class="fa-solid fa-link"></i> Share
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="recommend-status" class="alert alert-info" role="alert">
+    Configure your settings and click "Generate Recommendation".
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title">Final Dataset Selection</h5>
+      <div id="recommend-results-summary" style="margin-bottom: 0.75rem"></div>
+      <ul id="recommend-results-list" class="list-group"></ul>
     </div>
   </div>
 </div>
