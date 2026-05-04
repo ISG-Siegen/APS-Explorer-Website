@@ -9,12 +9,14 @@ var recommendedDatasetIds = [];
 var finalDatasetIds = [];
 
 var datasetFilterCheckboxes = [];
-var requiredDatasetCheckboxes = [];
 
 var datasetFilterHeaderElement = null;
 var datasetFilterArea = null;
 var requiredFilterHeaderElement = null;
 var requiredFilterArea = null;
+var requiredChipsElement = null;
+var requiredInputElement = null;
+var requiredSuggestionsElement = null;
 
 var selectAllDatasetArea = null;
 var selectAllDatasetButton = null;
@@ -78,6 +80,11 @@ function mapElements() {
     "required-dataset-header",
   );
   requiredFilterArea = document.getElementById("required-dataset-filter");
+  requiredChipsElement = document.getElementById("required-dataset-chips");
+  requiredInputElement = document.getElementById("required-dataset-input");
+  requiredSuggestionsElement = document.getElementById(
+    "required-dataset-suggestions",
+  );
 
   targetCountElement = document.getElementById("recommend-target-count");
   feedbackTypeElement = document.getElementById("recommend-feedback-type");
@@ -273,47 +280,13 @@ function initializeCandidateDatasetFilter(queryOptions) {
 }
 
 function initializeRequiredDatasetFilter(queryOptions) {
-  requiredFilterArea.innerHTML = "";
-
-  requiredDatasetCheckboxes = [];
-  requiredDatasetIds = [];
-
-  const initialRequiredIds = parseIdList(queryOptions?.requiredDatasets, []);
-
-  datasets.forEach((dataset) => {
-    const checkbox = createDatasetCheckbox(
-      `required-${dataset.id}`,
-      "requiredDatasetCheckbox",
-      dataset.name,
-    );
-    checkbox.dataset.datasetId = String(dataset.id);
-    checkbox.checked = initialRequiredIds.includes(dataset.id);
-    checkbox.onchange = onRequiredDatasetChange;
-
-    requiredFilterArea.appendChild(
-      createCheckboxWrapper(checkbox, `required-${dataset.id}`, dataset.name),
-    );
-    requiredDatasetCheckboxes.push(checkbox);
-
-    if (checkbox.checked) {
-      requiredDatasetIds.push(dataset.id);
-    }
-  });
-
-  updateFilterHeader(
-    requiredDatasetIds.length,
-    requiredDatasetCheckboxes.length,
-    requiredFilterHeaderElement,
-    requiredDatasetIds,
-    datasets,
-    "name",
+  requiredDatasetIds = parseIdList(queryOptions?.requiredDatasets, []).filter(
+    (id) => datasets.some((dataset) => dataset.id === id),
   );
 
-  updateSelectAllButtonText(
-    requiredDatasetIds.length,
-    requiredDatasetCheckboxes.length,
-    null,
-  );
+  renderRequiredChips();
+  updateRequiredHeader();
+  updateRequiredSuggestions();
 }
 
 function initializeEvents() {
@@ -338,6 +311,20 @@ function initializeEvents() {
   }
   if (targetCountElement) {
     targetCountElement.addEventListener("change", applyDatasetFilter);
+  }
+
+  if (requiredInputElement) {
+    requiredInputElement.addEventListener("input", updateRequiredSuggestions);
+    requiredInputElement.addEventListener("focus", updateRequiredSuggestions);
+    requiredInputElement.addEventListener("blur", () => {
+      setTimeout(() => {
+        if (requiredSuggestionsElement) {
+          requiredSuggestionsElement.classList.remove("show");
+          requiredSuggestionsElement.innerHTML = "";
+        }
+      }, 150);
+    });
+    requiredInputElement.addEventListener("keydown", onRequiredInputKeydown);
   }
 }
 
@@ -440,34 +427,140 @@ function onFilterDataset(e) {
   applyDatasetFilter();
 }
 
-function onRequiredDatasetChange(e) {
-  const datasetId = Number(e.target.dataset.datasetId);
-  if (e.target.checked) {
-    requiredDatasetIds.push(datasetId);
-  } else {
-    const index = requiredDatasetIds.indexOf(datasetId);
-    if (index > -1) {
-      requiredDatasetIds.splice(index, 1);
-    }
+function onRequiredInputKeydown(e) {
+  if (e.key !== "Enter") {
+    return;
   }
 
-  requiredDatasetIds = uniqueIds(requiredDatasetIds);
+  e.preventDefault();
+  const query = requiredInputElement?.value.trim();
+  if (!query) {
+    return;
+  }
 
+  const match = datasets.find(
+    (dataset) => dataset.name.toLowerCase() === query.toLowerCase(),
+  );
+
+  if (match) {
+    addRequiredDatasetById(match.id);
+    return;
+  }
+
+  const suggestions = getRequiredSuggestions(query);
+  if (suggestions.length > 0) {
+    addRequiredDatasetById(suggestions[0].id);
+  }
+}
+
+function updateRequiredHeader() {
   updateFilterHeader(
     requiredDatasetIds.length,
-    requiredDatasetCheckboxes.length,
+    datasets.length,
     requiredFilterHeaderElement,
     requiredDatasetIds,
     datasets,
     "name",
   );
-  updateSelectAllButtonText(
-    requiredDatasetIds.length,
-    requiredDatasetCheckboxes.length,
-    null,
-  );
+}
 
+function renderRequiredChips() {
+  if (!requiredChipsElement) {
+    return;
+  }
+
+  requiredChipsElement.innerHTML = "";
+
+  requiredDatasetIds
+    .map((id) => datasets.find((dataset) => dataset.id === id))
+    .filter((dataset) => !!dataset)
+    .forEach((dataset) => {
+      const chip = document.createElement("span");
+      chip.className = "required-dataset-chip";
+
+      const label = document.createElement("span");
+      label.textContent = dataset.name;
+
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.setAttribute("aria-label", "Remove dataset");
+      removeButton.textContent = "×";
+      removeButton.addEventListener("click", () => {
+        removeRequiredDatasetById(dataset.id);
+      });
+
+      chip.appendChild(label);
+      chip.appendChild(removeButton);
+      requiredChipsElement.appendChild(chip);
+    });
+}
+
+function addRequiredDatasetById(datasetId) {
+  if (requiredDatasetIds.includes(datasetId)) {
+    return;
+  }
+
+  requiredDatasetIds.push(datasetId);
+  requiredDatasetIds = uniqueIds(requiredDatasetIds);
+
+  if (requiredInputElement) {
+    requiredInputElement.value = "";
+  }
+
+  renderRequiredChips();
+  updateRequiredHeader();
+  updateRequiredSuggestions();
   applyDatasetFilter();
+}
+
+function removeRequiredDatasetById(datasetId) {
+  requiredDatasetIds = requiredDatasetIds.filter((id) => id !== datasetId);
+
+  renderRequiredChips();
+  updateRequiredHeader();
+  updateRequiredSuggestions();
+  applyDatasetFilter();
+}
+
+function getRequiredSuggestions(query) {
+  if (!query) {
+    return [];
+  }
+
+  const lowerQuery = query.toLowerCase();
+  return datasets
+    .filter((dataset) => dataset.name.toLowerCase().includes(lowerQuery))
+    .filter((dataset) => !requiredDatasetIds.includes(dataset.id))
+    .slice(0, 8);
+}
+
+function updateRequiredSuggestions() {
+  if (!requiredSuggestionsElement || !requiredInputElement) {
+    return;
+  }
+
+  const query = requiredInputElement.value.trim();
+  const suggestions = getRequiredSuggestions(query);
+
+  requiredSuggestionsElement.innerHTML = "";
+
+  if (suggestions.length === 0) {
+    requiredSuggestionsElement.classList.remove("show");
+    return;
+  }
+
+  suggestions.forEach((dataset) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = dataset.name;
+    button.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+      addRequiredDatasetById(dataset.id);
+    });
+    requiredSuggestionsElement.appendChild(button);
+  });
+
+  requiredSuggestionsElement.classList.add("show");
 }
 
 function applyDatasetFilter() {

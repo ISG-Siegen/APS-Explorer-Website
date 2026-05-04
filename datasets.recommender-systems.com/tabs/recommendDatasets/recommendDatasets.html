@@ -39,12 +39,24 @@
         aria-labelledby="headingRequiredDatasets"
         data-bs-parent="#accordionRequiredDatasets"
       >
-        <div
-          id="required-dataset-filter"
-          class="accordion-body"
-          style="display: flex; flex-wrap: wrap; gap: 12px"
-        >
-          <!-- Required dataset checkboxes -->
+        <div id="required-dataset-filter" class="accordion-body">
+          <div class="required-dataset-autocomplete">
+            <div
+              id="required-dataset-chips"
+              class="required-dataset-chips"
+            ></div>
+            <input
+              id="required-dataset-input"
+              class="form-control required-dataset-input"
+              type="text"
+              placeholder="Type to add required datasets"
+              autocomplete="off"
+            />
+          </div>
+          <div
+            id="required-dataset-suggestions"
+            class="required-dataset-suggestions"
+          ></div>
         </div>
       </div>
     </div>
