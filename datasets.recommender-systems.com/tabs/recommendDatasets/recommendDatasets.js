@@ -99,15 +99,64 @@ function initializeSettingsFromQuery(queryOptions) {
   setInteractionBounds();
 
   if (feedbackTypeElement) {
-    const feedbackTypes = [
-      ...new Set(datasets.map((d) => d.feedbackType).filter((v) => !!v)),
-    ].sort();
+    const feedbackTypeValues = datasets
+      .map((d) => d.feedbackType)
+      .filter((v) => !!v);
+    const feedbackTypeLookup = new Map(
+      feedbackTypeValues.map((value) => [value.toLowerCase(), value]),
+    );
+    const requiredTypes = ["explicit", "implicit"];
 
-    feedbackTypes.forEach((feedbackType) => {
+    let allOption = feedbackTypeElement.querySelector('option[value="all"]');
+    if (!allOption) {
+      allOption = document.createElement("option");
+      allOption.value = "all";
+      allOption.textContent = "All";
+    }
+    allOption.selected = true;
+
+    feedbackTypeElement.innerHTML = "";
+    feedbackTypeElement.appendChild(allOption);
+
+    const ensureOption = (baseType, optionValue, isDisabled) => {
+      let option = feedbackTypeElement.querySelector(
+        `option[data-base-type="${baseType}"]`,
+      );
+
+      if (!option) {
+        option = document.createElement("option");
+        option.dataset.baseType = baseType;
+        feedbackTypeElement.appendChild(option);
+      }
+
+      option.value = optionValue;
+      option.textContent =
+        baseType.charAt(0).toUpperCase() + baseType.slice(1).toLowerCase();
+      option.disabled = isDisabled;
+    };
+
+    requiredTypes.forEach((baseType) => {
+      const normalized = baseType.toLowerCase();
+      const datasetValue = feedbackTypeLookup.get(normalized);
+      ensureOption(baseType, datasetValue || baseType, !datasetValue);
+    });
+
+    const addOption = (typeValue) => {
       const option = document.createElement("option");
-      option.value = feedbackType;
-      option.textContent = feedbackType;
+      option.value = typeValue;
+      option.textContent = typeValue;
+      option.disabled = false;
       feedbackTypeElement.appendChild(option);
+    };
+
+    const seen = new Set(requiredTypes);
+    feedbackTypeValues.forEach((typeValue) => {
+      const normalized = typeValue.toLowerCase();
+      if (seen.has(normalized)) {
+        return;
+      }
+      seen.add(normalized);
+      addOption(typeValue);
     });
   }
 
@@ -123,7 +172,20 @@ function initializeSettingsFromQuery(queryOptions) {
   }
 
   if (queryOptions?.feedbackType && feedbackTypeElement) {
-    feedbackTypeElement.value = queryOptions.feedbackType;
+    const requestedFeedbackType = queryOptions?.feedbackType;
+    if (
+      requestedFeedbackType &&
+      !feedbackTypeElement.querySelector(
+        `option[value="${requestedFeedbackType}"][disabled]`,
+      )
+    ) {
+      const normalized = requestedFeedbackType.toLowerCase();
+      const mappedValue =
+        feedbackTypeElement.querySelector(
+          `option[data-base-type="${normalized}"]`,
+        )?.value || requestedFeedbackType;
+      feedbackTypeElement.value = mappedValue;
+    }
   }
   if (queryOptions?.minInteractions && minInteractionsElement) {
     minInteractionsElement.value = queryOptions.minInteractions;
