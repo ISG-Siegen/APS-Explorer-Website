@@ -27,7 +27,7 @@
           aria-expanded="false"
           aria-controls="collapseRequiredDatasets"
         >
-          <span>Required Datasets</span>
+          <span>Input Datasets</span>
           <span id="required-dataset-header" style="margin-left: auto"
             >(None selected)</span
           >
@@ -49,7 +49,7 @@
               id="required-dataset-input"
               class="form-control required-dataset-input"
               type="text"
-              placeholder="Type to add required datasets"
+              placeholder="Type to add input datasets"
               autocomplete="off"
             />
           </div>
@@ -155,6 +155,239 @@
             min="0"
             step="1"
             placeholder="No limit"
+          />
+        </div>
+
+        <div>
+          <label for="recommend-min-users" class="form-label">Min Users</label>
+          <input
+            id="recommend-min-users"
+            class="form-control"
+            type="number"
+            step="1"
+            placeholder="No min"
+          />
+        </div>
+        <div>
+          <label for="recommend-max-users" class="form-label">Max Users</label>
+          <input
+            id="recommend-max-users"
+            class="form-control"
+            type="number"
+            step="1"
+            placeholder="No max"
+          />
+        </div>
+        <div>
+          <label for="recommend-min-items" class="form-label">Min Items</label>
+          <input
+            id="recommend-min-items"
+            class="form-control"
+            type="number"
+            step="1"
+            placeholder="No min"
+          />
+        </div>
+        <div>
+          <label for="recommend-max-items" class="form-label">Max Items</label>
+          <input
+            id="recommend-max-items"
+            class="form-control"
+            type="number"
+            step="1"
+            placeholder="No max"
+          />
+        </div>
+        <div>
+          <label for="recommend-min-user-item-ratio" class="form-label"
+            >Min User-Item Ratio</label
+          >
+          <input
+            id="recommend-min-user-item-ratio"
+            class="form-control"
+            type="number"
+            step="any"
+            placeholder="No min"
+          />
+        </div>
+        <div>
+          <label for="recommend-max-user-item-ratio" class="form-label"
+            >Max User-Item Ratio</label
+          >
+          <input
+            id="recommend-max-user-item-ratio"
+            class="form-control"
+            type="number"
+            step="any"
+            placeholder="No max"
+          />
+        </div>
+        <div>
+          <label for="recommend-min-density" class="form-label"
+            >Min Density</label
+          >
+          <input
+            id="recommend-min-density"
+            class="form-control"
+            type="number"
+            step="any"
+            placeholder="No min"
+          />
+        </div>
+        <div>
+          <label for="recommend-max-density" class="form-label"
+            >Max Density</label
+          >
+          <input
+            id="recommend-max-density"
+            class="form-control"
+            type="number"
+            step="any"
+            placeholder="No max"
+          />
+        </div>
+        <div>
+          <label for="recommend-min-max-user" class="form-label"
+            >Min Max Rating/User</label
+          >
+          <input
+            id="recommend-min-max-user"
+            class="form-control"
+            type="number"
+            step="1"
+            placeholder="No min"
+          />
+        </div>
+        <div>
+          <label for="recommend-max-max-user" class="form-label"
+            >Max Max Rating/User</label
+          >
+          <input
+            id="recommend-max-max-user"
+            class="form-control"
+            type="number"
+            step="1"
+            placeholder="No max"
+          />
+        </div>
+        <div>
+          <label for="recommend-min-min-user" class="form-label"
+            >Min Min Rating/User</label
+          >
+          <input
+            id="recommend-min-min-user"
+            class="form-control"
+            type="number"
+            step="1"
+            placeholder="No min"
+          />
+        </div>
+        <div>
+          <label for="recommend-max-min-user" class="form-label"
+            >Max Min Rating/User</label
+          >
+          <input
+            id="recommend-max-min-user"
+            class="form-control"
+            type="number"
+            step="1"
+            placeholder="No max"
+          />
+        </div>
+        <div>
+          <label for="recommend-min-max-item" class="form-label"
+            >Min Max Rating/Item</label
+          >
+          <input
+            id="recommend-min-max-item"
+            class="form-control"
+            type="number"
+            step="1"
+            placeholder="No min"
+          />
+        </div>
+        <div>
+          <label for="recommend-max-max-item" class="form-label"
+            >Max Max Rating/Item</label
+          >
+          <input
+            id="recommend-max-max-item"
+            class="form-control"
+            type="number"
+            step="1"
+            placeholder="No max"
+          />
+        </div>
+        <div>
+          <label for="recommend-min-min-item" class="form-label"
+            >Min Min Rating/Item</label
+          >
+          <input
+            id="recommend-min-min-item"
+            class="form-control"
+            type="number"
+            step="1"
+            placeholder="No min"
+          />
+        </div>
+        <div>
+          <label for="recommend-max-min-item" class="form-label"
+            >Max Min Rating/Item</label
+          >
+          <input
+            id="recommend-max-min-item"
+            class="form-control"
+            type="number"
+            step="1"
+            placeholder="No max"
+          />
+        </div>
+        <div>
+          <label for="recommend-min-mean-user" class="form-label"
+            >Min Mean Ratings/User</label
+          >
+          <input
+            id="recommend-min-mean-user"
+            class="form-control"
+            type="number"
+            step="any"
+            placeholder="No min"
+          />
+        </div>
+        <div>
+          <label for="recommend-max-mean-user" class="form-label"
+            >Max Mean Ratings/User</label
+          >
+          <input
+            id="recommend-max-mean-user"
+            class="form-control"
+            type="number"
+            step="any"
+            placeholder="No max"
+          />
+        </div>
+        <div>
+          <label for="recommend-min-mean-item" class="form-label"
+            >Min Mean Ratings/Item</label
+          >
+          <input
+            id="recommend-min-mean-item"
+            class="form-control"
+            type="number"
+            step="any"
+            placeholder="No min"
+          />
+        </div>
+        <div>
+          <label for="recommend-max-mean-item" class="form-label"
+            >Max Mean Ratings/Item</label
+          >
+          <input
+            id="recommend-max-mean-item"
+            class="form-control"
+            type="number"
+            step="any"
+            placeholder="No max"
           />
         </div>
       </div>

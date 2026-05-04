@@ -26,6 +26,26 @@ var targetCountElement = null;
 var feedbackTypeElement = null;
 var minInteractionsElement = null;
 var maxInteractionsElement = null;
+var minUsersElement = null;
+var maxUsersElement = null;
+var minItemsElement = null;
+var maxItemsElement = null;
+var minUserItemRatioElement = null;
+var maxUserItemRatioElement = null;
+var minDensityElement = null;
+var maxDensityElement = null;
+var minMaxUserElement = null;
+var maxMaxUserElement = null;
+var minMinUserElement = null;
+var maxMinUserElement = null;
+var minMaxItemElement = null;
+var maxMaxItemElement = null;
+var minMinItemElement = null;
+var maxMinItemElement = null;
+var minMeanUserElement = null;
+var maxMeanUserElement = null;
+var minMeanItemElement = null;
+var maxMeanItemElement = null;
 var generateButtonElement = null;
 var openApsButtonElement = null;
 var shareButtonElement = null;
@@ -42,7 +62,73 @@ var activeFilters = {
   feedbackType: "all",
   minInteractions: null,
   maxInteractions: null,
+  metadataRanges: {},
 };
+
+var metadataRangeFields = [
+  {
+    key: "numberOfUsers",
+    minId: "recommend-min-users",
+    maxId: "recommend-max-users",
+    step: 1,
+  },
+  {
+    key: "numberOfItems",
+    minId: "recommend-min-items",
+    maxId: "recommend-max-items",
+    step: 1,
+  },
+  {
+    key: "userItemRatio",
+    minId: "recommend-min-user-item-ratio",
+    maxId: "recommend-max-user-item-ratio",
+    step: "any",
+  },
+  {
+    key: "density",
+    minId: "recommend-min-density",
+    maxId: "recommend-max-density",
+    step: "any",
+  },
+  {
+    key: "highestNumberOfRatingBySingleUser",
+    minId: "recommend-min-max-user",
+    maxId: "recommend-max-max-user",
+    step: 1,
+  },
+  {
+    key: "lowestNumberOfRatingBySingleUser",
+    minId: "recommend-min-min-user",
+    maxId: "recommend-max-min-user",
+    step: 1,
+  },
+  {
+    key: "highestNumberOfRatingOnSingleItem",
+    minId: "recommend-min-max-item",
+    maxId: "recommend-max-max-item",
+    step: 1,
+  },
+  {
+    key: "lowestNumberOfRatingOnSingleItem",
+    minId: "recommend-min-min-item",
+    maxId: "recommend-max-min-item",
+    step: 1,
+  },
+  {
+    key: "meanNumberOfRatingsByUser",
+    minId: "recommend-min-mean-user",
+    maxId: "recommend-max-mean-user",
+    step: "any",
+  },
+  {
+    key: "meanNumberOfRatingsOnItem",
+    minId: "recommend-min-mean-item",
+    maxId: "recommend-max-mean-item",
+    step: "any",
+  },
+];
+
+var metadataRangeBounds = {};
 
 export async function initialize(queryOptions) {
   datasets = await ApiService.getDatasets();
@@ -94,6 +180,30 @@ function mapElements() {
   maxInteractionsElement = document.getElementById(
     "recommend-max-interactions",
   );
+  minUsersElement = document.getElementById("recommend-min-users");
+  maxUsersElement = document.getElementById("recommend-max-users");
+  minItemsElement = document.getElementById("recommend-min-items");
+  maxItemsElement = document.getElementById("recommend-max-items");
+  minUserItemRatioElement = document.getElementById(
+    "recommend-min-user-item-ratio",
+  );
+  maxUserItemRatioElement = document.getElementById(
+    "recommend-max-user-item-ratio",
+  );
+  minDensityElement = document.getElementById("recommend-min-density");
+  maxDensityElement = document.getElementById("recommend-max-density");
+  minMaxUserElement = document.getElementById("recommend-min-max-user");
+  maxMaxUserElement = document.getElementById("recommend-max-max-user");
+  minMinUserElement = document.getElementById("recommend-min-min-user");
+  maxMinUserElement = document.getElementById("recommend-max-min-user");
+  minMaxItemElement = document.getElementById("recommend-min-max-item");
+  maxMaxItemElement = document.getElementById("recommend-max-max-item");
+  minMinItemElement = document.getElementById("recommend-min-min-item");
+  maxMinItemElement = document.getElementById("recommend-max-min-item");
+  minMeanUserElement = document.getElementById("recommend-min-mean-user");
+  maxMeanUserElement = document.getElementById("recommend-max-mean-user");
+  minMeanItemElement = document.getElementById("recommend-min-mean-item");
+  maxMeanItemElement = document.getElementById("recommend-max-mean-item");
   generateButtonElement = document.getElementById("recommend-generate-btn");
   openApsButtonElement = document.getElementById("recommend-open-aps-btn");
   shareButtonElement = document.getElementById("recommend-share-btn");
@@ -104,6 +214,7 @@ function mapElements() {
 
 function initializeSettingsFromQuery(queryOptions) {
   setInteractionBounds();
+  setMetadataRangeBounds();
 
   if (feedbackTypeElement) {
     const feedbackTypeValues = datasets
@@ -176,7 +287,6 @@ function initializeSettingsFromQuery(queryOptions) {
 
   if (targetCountElement) {
     targetCountElement.value = targetCount;
-    targetCountElement.max = String(datasets.length || 1);
   }
 
   if (queryOptions?.feedbackType && feedbackTypeElement) {
@@ -310,6 +420,16 @@ function initializeEvents() {
   if (maxInteractionsElement) {
     maxInteractionsElement.addEventListener("change", applyDatasetFilter);
   }
+  metadataRangeFields.forEach((field) => {
+    const minEl = document.getElementById(field.minId);
+    const maxEl = document.getElementById(field.maxId);
+    if (minEl) {
+      minEl.addEventListener("change", applyDatasetFilter);
+    }
+    if (maxEl) {
+      maxEl.addEventListener("change", applyDatasetFilter);
+    }
+  });
   if (targetCountElement) {
     targetCountElement.addEventListener("change", applyDatasetFilter);
   }
@@ -596,6 +716,7 @@ function generateRecommendation() {
     ),
   );
 
+  console.log(getCandidatePool());
   let effectiveTargetCount = targetCount;
   let warningText = "";
 
@@ -603,7 +724,7 @@ function generateRecommendation() {
     effectiveTargetCount = requiredUnique.length;
     targetCountElement.value = effectiveTargetCount;
     warningText =
-      "Target count was smaller than required datasets and was adjusted.";
+      "Target count was smaller than input datasets and was adjusted.";
   }
 
   const missingCount = Math.max(
@@ -749,8 +870,46 @@ function getCandidatePool() {
       return false;
     }
 
+    if (!passesMetadataRangeFilters(dataset)) {
+      return false;
+    }
+
     return true;
   });
+}
+
+function passesMetadataRangeFilters(dataset) {
+  const ranges = activeFilters.metadataRanges || {};
+  return metadataRangeFields.every((field) => {
+    const range = ranges[field.key];
+    if (!range) {
+      return true;
+    }
+
+    const value = Number(dataset[field.key]);
+    if (!Number.isFinite(value)) {
+      return isDefaultMetadataRange(field.key, range);
+    }
+
+    if (range.min !== null && value < range.min) {
+      return false;
+    }
+    if (range.max !== null && value > range.max) {
+      return false;
+    }
+    return true;
+  });
+}
+
+function isDefaultMetadataRange(key, range) {
+  const bounds = metadataRangeBounds[key];
+  if (!bounds) {
+    return true;
+  }
+
+  const minMatches = Math.abs(range.min - bounds.min) < 1e-9;
+  const maxMatches = Math.abs(range.max - bounds.max) < 1e-9;
+  return minMatches && maxMatches;
 }
 
 function readActiveFiltersFromUi() {
@@ -797,7 +956,85 @@ function readActiveFiltersFromUi() {
       Number.isFinite(Number(maxInteractionsElement.value))
         ? Number(maxInteractionsElement.value)
         : null,
+    metadataRanges: readMetadataRangesFromUi(),
   };
+}
+
+function readMetadataRangesFromUi() {
+  const ranges = {};
+
+  metadataRangeFields.forEach((field) => {
+    const minEl = document.getElementById(field.minId);
+    const maxEl = document.getElementById(field.maxId);
+    const minValue = minEl ? Number(minEl.value) : NaN;
+    const maxValue = maxEl ? Number(maxEl.value) : NaN;
+
+    ranges[field.key] = {
+      min:
+        minEl && minEl.value !== "" && Number.isFinite(minValue)
+          ? minValue
+          : null,
+      max:
+        maxEl && maxEl.value !== "" && Number.isFinite(maxValue)
+          ? maxValue
+          : null,
+    };
+  });
+
+  return ranges;
+}
+
+function setMetadataRangeBounds() {
+  metadataRangeFields.forEach((field) => {
+    const values = datasets
+      .map((dataset) => Number(dataset[field.key]))
+      .filter((value) => Number.isFinite(value));
+
+    if (values.length === 0) {
+      return;
+    }
+
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
+    const formattedMin = formatMinRangeValue(minValue, field.step);
+    const formattedMax = formatMaxRangeValue(maxValue, field.step);
+    metadataRangeBounds[field.key] = {
+      min: Number(formattedMin),
+      max: Number(formattedMax),
+    };
+
+    const minEl = document.getElementById(field.minId);
+    const maxEl = document.getElementById(field.maxId);
+
+    if (minEl) {
+      minEl.min = formattedMin;
+      minEl.max = formattedMax;
+      if (field.step !== undefined) {
+        minEl.step = String(field.step);
+      }
+      minEl.value = formattedMin;
+    }
+    if (maxEl) {
+      maxEl.min = formattedMin;
+      maxEl.max = formattedMax;
+      if (field.step !== undefined) {
+        maxEl.step = String(field.step);
+      }
+      maxEl.value = formattedMax;
+    }
+  });
+}
+
+function formatMinRangeValue(value) {
+  const factor = 100;
+  const truncated = Math.trunc(value * factor) / factor;
+  return truncated.toString();
+}
+
+function formatMaxRangeValue(value, step) {
+  const factor = 100;
+  const ceiled = Math.ceil(value * factor) / factor;
+  return ceiled.toString();
 }
 
 function getValidatedTargetCount() {
