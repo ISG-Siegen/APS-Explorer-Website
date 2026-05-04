@@ -31,6 +31,11 @@ var statusElement = null;
 var resultsSummaryElement = null;
 var resultsListElement = null;
 
+var interactionsBounds = {
+  min: null,
+  max: null,
+};
+
 var activeFilters = {
   feedbackType: "all",
   minInteractions: null,
@@ -91,6 +96,8 @@ function mapElements() {
 }
 
 function initializeSettingsFromQuery(queryOptions) {
+  setInteractionBounds();
+
   if (feedbackTypeElement) {
     const feedbackTypes = [
       ...new Set(datasets.map((d) => d.feedbackType).filter((v) => !!v)),
@@ -126,6 +133,34 @@ function initializeSettingsFromQuery(queryOptions) {
   }
 
   readActiveFiltersFromUi();
+}
+
+function setInteractionBounds() {
+  const interactions = datasets
+    .map((dataset) => Number(dataset.numberOfInteractions))
+    .filter((value) => Number.isFinite(value));
+
+  if (interactions.length === 0) {
+    interactionsBounds = { min: null, max: null };
+    return;
+  }
+
+  interactionsBounds = {
+    min: Math.min(...interactions),
+    max: Math.max(...interactions),
+  };
+
+  if (minInteractionsElement) {
+    minInteractionsElement.min = String(interactionsBounds.min);
+    minInteractionsElement.max = String(interactionsBounds.max);
+    minInteractionsElement.value = String(interactionsBounds.min);
+  }
+
+  if (maxInteractionsElement) {
+    maxInteractionsElement.min = String(interactionsBounds.min);
+    maxInteractionsElement.max = String(interactionsBounds.max);
+    maxInteractionsElement.value = String(interactionsBounds.max);
+  }
 }
 
 function initializeCandidateDatasetFilter(queryOptions) {
@@ -564,20 +599,46 @@ function getCandidatePool() {
 function readActiveFiltersFromUi() {
   const minInteractions = Number(minInteractionsElement?.value);
   const maxInteractions = Number(maxInteractionsElement?.value);
+  const boundsMin = interactionsBounds.min;
+  const boundsMax = interactionsBounds.max;
+
+  if (minInteractionsElement && Number.isFinite(boundsMin)) {
+    const minValue = Number(minInteractionsElement.value);
+    if (Number.isFinite(minValue) && minValue < boundsMin) {
+      minInteractionsElement.value = String(boundsMin);
+    }
+    if (Number.isFinite(minValue) && Number.isFinite(boundsMax)) {
+      if (minValue > boundsMax) {
+        minInteractionsElement.value = String(boundsMax);
+      }
+    }
+  }
+
+  if (maxInteractionsElement && Number.isFinite(boundsMax)) {
+    const maxValue = Number(maxInteractionsElement.value);
+    if (Number.isFinite(maxValue) && maxValue > boundsMax) {
+      maxInteractionsElement.value = String(boundsMax);
+    }
+    if (Number.isFinite(maxValue) && Number.isFinite(boundsMin)) {
+      if (maxValue < boundsMin) {
+        maxInteractionsElement.value = String(boundsMin);
+      }
+    }
+  }
 
   activeFilters = {
     feedbackType: feedbackTypeElement?.value || "all",
     minInteractions:
       minInteractionsElement &&
       minInteractionsElement.value !== "" &&
-      Number.isFinite(minInteractions)
-        ? minInteractions
+      Number.isFinite(Number(minInteractionsElement.value))
+        ? Number(minInteractionsElement.value)
         : null,
     maxInteractions:
       maxInteractionsElement &&
       maxInteractionsElement.value !== "" &&
-      Number.isFinite(maxInteractions)
-        ? maxInteractions
+      Number.isFinite(Number(maxInteractionsElement.value))
+        ? Number(maxInteractionsElement.value)
         : null,
   };
 }
