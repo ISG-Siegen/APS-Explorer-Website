@@ -176,6 +176,7 @@ function initializeSettingsFromQuery(queryOptions) {
 
   if (targetCountElement) {
     targetCountElement.value = targetCount;
+    targetCountElement.max = String(datasets.length || 1);
   }
 
   if (queryOptions?.feedbackType && feedbackTypeElement) {
@@ -566,6 +567,7 @@ function updateRequiredSuggestions() {
 function applyDatasetFilter() {
   readActiveFiltersFromUi();
 
+  updateTargetCountBounds();
   const candidatePool = getCandidatePool();
   const targetCount = getValidatedTargetCount();
 
@@ -803,12 +805,35 @@ function getValidatedTargetCount() {
     return 1;
   }
 
+  const bounds = updateTargetCountBounds();
   let targetCount = Number(targetCountElement.value);
-  if (!Number.isFinite(targetCount) || targetCount < 1) {
-    targetCount = 1;
+  const minTarget = bounds.minTarget;
+  if (!Number.isFinite(targetCount) || targetCount < minTarget) {
+    targetCount = minTarget;
+    targetCountElement.value = targetCount;
+  }
+  const maxTarget = bounds.maxTarget;
+  if (targetCount > maxTarget) {
+    targetCount = maxTarget;
     targetCountElement.value = targetCount;
   }
   return Math.floor(targetCount);
+}
+
+function updateTargetCountBounds() {
+  const minTarget = Math.max(1, requiredDatasetIds.length + 1);
+  let maxTarget = selectedDatasets.length || 1;
+
+  if (maxTarget < minTarget) {
+    maxTarget = minTarget;
+  }
+
+  if (targetCountElement) {
+    targetCountElement.min = String(minTarget);
+    targetCountElement.max = String(maxTarget);
+  }
+
+  return { minTarget, maxTarget };
 }
 
 function updateFilterHeader(
