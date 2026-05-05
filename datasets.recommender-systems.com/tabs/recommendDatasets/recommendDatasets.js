@@ -411,6 +411,138 @@ function initializeEvents() {
     shareButtonElement.addEventListener("click", shareRecommendState);
   }
 
+  // Export button event listeners
+  const exportBtn = document.getElementById("recommend-export-btn");
+  const exportImage = document.getElementById("export-image");
+  const exportMarkdown = document.getElementById("export-markdown");
+  const exportHtml = document.getElementById("export-html");
+  const exportLatex = document.getElementById("export-latex");
+  const exportBibtex = document.getElementById("export-bibtex");
+  const exportModal = document.getElementById("exportModal");
+  const exportPreviewArea = document.getElementById("export-preview-area");
+  const exportImagePreview = document.getElementById("export-image-preview");
+  const exportTextarea = document.getElementById("export-textarea");
+  const exportCopyBtn = document.getElementById("export-copy-btn");
+  const exportDownloadBtn = document.getElementById("export-download-btn");
+
+  if (exportImage) {
+    exportImage.addEventListener("click", function (e) {
+      e.preventDefault();
+      showExportModal("image");
+    });
+  }
+  if (exportMarkdown) {
+    exportMarkdown.addEventListener("click", function (e) {
+      e.preventDefault();
+      showExportModal("markdown");
+    });
+  }
+  if (exportHtml) {
+    exportHtml.addEventListener("click", function (e) {
+      e.preventDefault();
+      showExportModal("html");
+    });
+  }
+  if (exportLatex) {
+    exportLatex.addEventListener("click", function (e) {
+      e.preventDefault();
+      showExportModal("latex");
+    });
+  }
+  if (exportBibtex) {
+    exportBibtex.addEventListener("click", function (e) {
+      e.preventDefault();
+      showExportModal("bibtex");
+    });
+  }
+
+  if (exportCopyBtn) {
+    exportCopyBtn.addEventListener("click", function () {
+      if (exportTextarea && exportTextarea.style.display !== "none") {
+        exportTextarea.select();
+        document.execCommand("copy");
+      }
+    });
+  }
+  if (exportDownloadBtn) {
+    exportDownloadBtn.addEventListener("click", function () {
+      if (exportTextarea && exportTextarea.style.display !== "none") {
+        const blob = new Blob([exportTextarea.value], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "aps-dataset-export.txt";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
+      }
+    });
+  }
+
+  // Show export modal and fill preview area
+  function showExportModal(type) {
+    const exportModal = document.getElementById("exportModal");
+    const exportPreviewArea = document.getElementById("export-preview-area");
+    const exportImagePreview = document.getElementById("export-image-preview");
+    const exportTextarea = document.getElementById("export-textarea");
+    if (!exportModal) return;
+
+    // Reset
+    if (exportPreviewArea) exportPreviewArea.innerHTML = "";
+    if (exportImagePreview) exportImagePreview.innerHTML = "";
+    if (exportTextarea) {
+      exportTextarea.value = "";
+      exportTextarea.style.display = "none";
+    }
+
+    if (type === "image") {
+      // TODO: Render APS visual as SVG/Canvas and show in exportImagePreview
+      if (exportImagePreview) {
+        exportImagePreview.innerHTML =
+          '<div style="text-align:center;">[Bild-Export folgt]</div>';
+      }
+    } else {
+      let text = "";
+      if (type === "markdown") {
+        text = exportAsMarkdown();
+      } else if (type === "html") {
+        text = exportAsHtml();
+      } else if (type === "latex") {
+        text = exportAsLatex();
+      } else if (type === "bibtex") {
+        text = exportAsBibtex();
+      }
+      if (exportTextarea) {
+        exportTextarea.value = text;
+        exportTextarea.style.display = "block";
+      }
+    }
+
+    // Show modal (Bootstrap 5)
+    if (window.bootstrap && window.bootstrap.Modal) {
+      const modal = window.bootstrap.Modal.getOrCreateInstance(exportModal);
+      modal.show();
+    } else {
+      exportModal.style.display = "block";
+    }
+  }
+
+  // Export stubs (to be implemented)
+  function exportAsMarkdown() {
+    return "# APS Dataset Export\n\n[Markdown Export folgt]";
+  }
+  function exportAsHtml() {
+    return "<h2>APS Dataset Export</h2><p>HTML Export folgt</p>";
+  }
+  function exportAsLatex() {
+    return "% APS Dataset Export\nLaTeX Export folgt";
+  }
+  function exportAsBibtex() {
+    return "% APS Dataset Export\n@misc{aps_export, note={BibTeX Export folgt}}";
+  }
   if (feedbackTypeElement) {
     feedbackTypeElement.addEventListener("change", applyDatasetFilter);
   }

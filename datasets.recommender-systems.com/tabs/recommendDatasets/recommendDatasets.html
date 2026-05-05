@@ -418,6 +418,42 @@
         >
           <i class="fa-solid fa-link"></i> Share
         </button>
+        <div class="btn-group" style="margin-left: 0.5rem">
+          <button
+            id="recommend-export-btn"
+            type="button"
+            class="btn btn-outline-success dropdown-toggle"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            <i class="fa-solid fa-file-export"></i> Export
+          </button>
+          <ul class="dropdown-menu" aria-labelledby="recommend-export-btn">
+            <li>
+              <a class="dropdown-item" href="#" id="export-image"
+                >Export Image</a
+              >
+            </li>
+            <li>
+              <a class="dropdown-item" href="#" id="export-markdown"
+                >Export Markdown</a
+              >
+            </li>
+            <li>
+              <a class="dropdown-item" href="#" id="export-html">Export HTML</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="#" id="export-latex"
+                >Export LaTeX</a
+              >
+            </li>
+            <li>
+              <a class="dropdown-item" href="#" id="export-bibtex"
+                >Export BibTeX</a
+              >
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
@@ -431,6 +467,62 @@
       <h5 class="card-title">Final Dataset Selection</h5>
       <div id="recommend-results-summary" style="margin-bottom: 0.75rem"></div>
       <ul id="recommend-results-list" class="list-group"></ul>
+      <!-- Export Modal Placeholder -->
+      <div
+        class="modal fade"
+        id="exportModal"
+        tabindex="-1"
+        aria-labelledby="exportModalLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exportModalLabel">Export Preview</h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <div id="export-preview-area"></div>
+              <div id="export-image-preview" style="margin-top: 1rem"></div>
+              <textarea
+                id="export-textarea"
+                class="form-control"
+                style="margin-top: 1rem; display: none"
+                rows="10"
+                readonly
+              ></textarea>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                id="export-copy-btn"
+              >
+                Copy
+              </button>
+              <button
+                type="button"
+                class="btn btn-success"
+                id="export-download-btn"
+              >
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
