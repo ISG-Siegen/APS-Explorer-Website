@@ -1,5 +1,5 @@
 import { ApiService } from "../../apiService.js";
-import { copyToClipboard, getQueryString } from "../../main.js";
+import { copyToClipboard, getQueryString, versionNumber } from "../../main.js";
 
 var datasets = [];
 
@@ -401,6 +401,8 @@ function initializeRequiredDatasetFilter(queryOptions) {
 }
 
 function initializeEvents() {
+  var _exportedImageCanvas = null;
+
   if (generateButtonElement) {
     generateButtonElement.addEventListener("click", generateRecommendation);
   }
@@ -464,9 +466,27 @@ function initializeEvents() {
       }
     });
   }
+  function setCopyButtonEnabled(enabled) {
+    if (!exportCopyBtn) return;
+    exportCopyBtn.disabled = !enabled;
+    exportCopyBtn.classList.toggle("disabled", !enabled);
+  }
   if (exportDownloadBtn) {
     exportDownloadBtn.addEventListener("click", function () {
-      if (exportTextarea && exportTextarea.style.display !== "none") {
+      if (_exportedImageCanvas) {
+        _exportedImageCanvas.toBlob(function (blob) {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "aps-dataset-recommendation-v" + versionNumber + ".png";
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(function () {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }, 100);
+        }, "image/png");
+      } else if (exportTextarea && exportTextarea.style.display !== "none") {
         const blob = new Blob([exportTextarea.value], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -480,6 +500,127 @@ function initializeEvents() {
         }, 100);
       }
     });
+  }
+
+  // Render recommendation results as a canvas image
+  function renderRecommendationImage() {
+    const finalDatasets = finalDatasetIds
+      .map(function (id) { return datasets.find(function (d) { return d.id === id; }); })
+      .filter(function (d) { return !!d; });
+    if (finalDatasets.length === 0) return null;
+
+    const canvasWidth = 800;
+    const rowHeight = 36;
+    const headerHeight = 80;
+    const footerHeight = 50;
+    const padding = 20;
+    const separatorHeight = 6;
+    const contentHeight = finalDatasets.length * rowHeight;
+    const totalHeight = headerHeight + separatorHeight + contentHeight + separatorHeight + footerHeight + padding * 2;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = canvasWidth;
+    canvas.height = totalHeight;
+    const ctx = canvas.getContext("2d");
+
+    // White background
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvasWidth, totalHeight);
+
+    // Header
+    ctx.fillStyle = "#212529";
+    ctx.font = "bold 24px Arial, sans-serif";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText("Dataset Recommendation", padding, padding + 10);
+
+    ctx.font = "14px Arial, sans-serif";
+    ctx.fillStyle = "#6c757d";
+    var summaryText = "Final: " + finalDatasets.length + " | Required: " + requiredDatasetIds.length + " | Recommended: " + recommendedDatasetIds.length;
+    ctx.fillText(summaryText, padding, padding + 42);
+
+    var y = padding + headerHeight;
+
+    // Separator line
+    ctx.strokeStyle = "#dee2e6";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padding, y);
+    ctx.lineTo(canvasWidth - padding, y);
+    ctx.stroke();
+    y += separatorHeight;
+
+    // Dataset rows
+    ctx.font = "15px Arial, sans-serif";
+    var maxNameWidth = canvasWidth - padding * 2 - 120;
+    finalDatasets.forEach(function (dataset) {
+      var isRequired = requiredDatasetIds.includes(dataset.id);
+      ctx.fillStyle = "#212529";
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "left";
+      var name = dataset.name;
+      if (ctx.measureText(name).width > maxNameWidth) {
+        while (ctx.measureText(name + "...").width > maxNameWidth && name.length > 1) {
+          name = name.slice(0, -1);
+        }
+        name += "...";
+      }
+      ctx.fillText(name, padding + 4, y + rowHeight / 2);
+
+      // Badge background
+      var badgeText = isRequired ? "Required" : "Recommended";
+      var badgeColor = isRequired ? "#0d6efd" : "#198754";
+      ctx.font = "12px Arial, sans-serif";
+      var badgeWidth = ctx.measureText(badgeText).width + 20;
+      var badgeX = canvasWidth - padding - badgeWidth - 4;
+      var badgeY = y + 6;
+      var badgeHeight = rowHeight - 12;
+      var r = 4;
+
+      ctx.fillStyle = badgeColor;
+      ctx.beginPath();
+      ctx.moveTo(badgeX + r, badgeY);
+      ctx.lineTo(badgeX + badgeWidth - r, badgeY);
+      ctx.quadraticCurveTo(badgeX + badgeWidth, badgeY, badgeX + badgeWidth, badgeY + r);
+      ctx.lineTo(badgeX + badgeWidth, badgeY + badgeHeight - r);
+      ctx.quadraticCurveTo(badgeX + badgeWidth, badgeY + badgeHeight, badgeX + badgeWidth - r, badgeY + badgeHeight);
+      ctx.lineTo(badgeX + r, badgeY + badgeHeight);
+      ctx.quadraticCurveTo(badgeX, badgeY + badgeHeight, badgeX, badgeY + badgeHeight - r);
+      ctx.lineTo(badgeX, badgeY + r);
+      ctx.quadraticCurveTo(badgeX, badgeY, badgeX + r, badgeY);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#ffffff";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(badgeText, badgeX + badgeWidth / 2, badgeY + badgeHeight / 2);
+
+      y += rowHeight;
+    });
+
+    // Separator before footer
+    y += separatorHeight / 2;
+    ctx.strokeStyle = "#dee2e6";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padding, y);
+    ctx.lineTo(canvasWidth - padding, y);
+    ctx.stroke();
+
+    // Footer with version and source
+    var footerY = totalHeight - footerHeight;
+    ctx.font = "13px Arial, sans-serif";
+    ctx.fillStyle = "#6c757d";
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "left";
+    ctx.fillText("Source: datasets.recommender-systems.com", padding, footerY + 18);
+
+    var versionText = "Version: " + versionNumber;
+    ctx.textAlign = "right";
+    ctx.fillText(versionText, canvasWidth - padding, footerY + 18);
+
+    return canvas;
   }
 
   // Show export modal and fill preview area
@@ -499,12 +640,22 @@ function initializeEvents() {
     }
 
     if (type === "image") {
-      // TODO: Render APS visual as SVG/Canvas and show in exportImagePreview
-      if (exportImagePreview) {
-        exportImagePreview.innerHTML =
-          '<div style="text-align:center;">[Bild-Export folgt]</div>';
+      _exportedImageCanvas = renderRecommendationImage();
+      if (exportImagePreview && _exportedImageCanvas) {
+        exportImagePreview.appendChild(_exportedImageCanvas);
+        _exportedImageCanvas.style.maxWidth = "100%";
+        _exportedImageCanvas.style.border = "1px solid #ddd";
+        _exportedImageCanvas.style.borderRadius = "4px";
       }
+      if (exportTextarea) {
+        exportTextarea.style.display = "none";
+      }
+      if (exportPreviewArea) {
+        exportPreviewArea.innerHTML = "";
+      }
+      setCopyButtonEnabled(false);
     } else {
+      _exportedImageCanvas = null;
       let text = "";
       if (type === "markdown") {
         text = exportAsMarkdown();
@@ -519,6 +670,7 @@ function initializeEvents() {
         exportTextarea.value = text;
         exportTextarea.style.display = "block";
       }
+      setCopyButtonEnabled(true);
     }
 
     // Show modal (Bootstrap 5)
