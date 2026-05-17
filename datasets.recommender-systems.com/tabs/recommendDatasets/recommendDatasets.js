@@ -65,6 +65,50 @@ var activeFilters = {
   metadataRanges: {},
 };
 
+function formatNumber(n) {
+  if (n == null || !Number.isFinite(Number(n))) return "—";
+  return Number(n).toLocaleString();
+}
+
+function formatDensity(d) {
+  if (d == null || !Number.isFinite(Number(d))) return "—";
+  return (Number(d) * 100).toFixed(2) + "%";
+}
+
+function formatRatio(r) {
+  if (r == null || !Number.isFinite(Number(r))) return "—";
+  return Number(r).toFixed(2);
+}
+
+function getDatasetMetaParts(dataset) {
+  var parts = [];
+  if (dataset.feedbackType) {
+    parts.push({ label: "Feedback", value: dataset.feedbackType });
+  }
+  if (dataset.numberOfInteractions != null) {
+    parts.push({ label: "Interactions", value: formatNumber(dataset.numberOfInteractions) });
+  }
+  if (dataset.numberOfUsers != null) {
+    parts.push({ label: "Users", value: formatNumber(dataset.numberOfUsers) });
+  }
+  if (dataset.numberOfItems != null) {
+    parts.push({ label: "Items", value: formatNumber(dataset.numberOfItems) });
+  }
+  if (dataset.density != null) {
+    parts.push({ label: "Density", value: formatDensity(dataset.density) });
+  }
+  if (dataset.userItemRatio != null) {
+    parts.push({ label: "Ratio", value: formatRatio(dataset.userItemRatio) });
+  }
+  return parts;
+}
+
+function getFinalDatasets() {
+  return finalDatasetIds
+    .map(function (id) { return datasets.find(function (d) { return d.id === id; }); })
+    .filter(function (d) { return !!d; });
+}
+
 var metadataRangeFields = [
   {
     key: "numberOfUsers",
@@ -504,13 +548,11 @@ function initializeEvents() {
 
   // Render recommendation results as a canvas image
   function renderRecommendationImage() {
-    const finalDatasets = finalDatasetIds
-      .map(function (id) { return datasets.find(function (d) { return d.id === id; }); })
-      .filter(function (d) { return !!d; });
+    const finalDatasets = getFinalDatasets();
     if (finalDatasets.length === 0) return null;
 
     const canvasWidth = 800;
-    const rowHeight = 36;
+    const rowHeight = 54;
     const headerHeight = 80;
     const footerHeight = 50;
     const padding = 20;
@@ -551,10 +593,14 @@ function initializeEvents() {
     y += separatorHeight;
 
     // Dataset rows
-    ctx.font = "15px Arial, sans-serif";
-    var maxNameWidth = canvasWidth - padding * 2 - 120;
+    var metaFontSize = 11;
+    var maxNameWidth = canvasWidth - padding * 2 - 200;
     finalDatasets.forEach(function (dataset) {
       var isRequired = requiredDatasetIds.includes(dataset.id);
+      var metaParts = getDatasetMetaParts(dataset);
+
+      // Dataset name
+      ctx.font = "bold 15px Arial, sans-serif";
       ctx.fillStyle = "#212529";
       ctx.textBaseline = "middle";
       ctx.textAlign = "left";
@@ -565,16 +611,24 @@ function initializeEvents() {
         }
         name += "...";
       }
-      ctx.fillText(name, padding + 4, y + rowHeight / 2);
+      ctx.fillText(name, padding + 4, y + 14);
 
-      // Badge background
+      // Metadata line
+      ctx.font = metaFontSize + "px Arial, sans-serif";
+      ctx.fillStyle = "#6c757d";
+      var metaText = metaParts.map(function (p) { return p.label + ": " + p.value; }).join("  ·  ");
+      if (metaText.length > 0) {
+        ctx.fillText(metaText, padding + 4, y + 34);
+      }
+
+      // Badge: Required/Recommended
       var badgeText = isRequired ? "Required" : "Recommended";
       var badgeColor = isRequired ? "#0d6efd" : "#198754";
       ctx.font = "12px Arial, sans-serif";
       var badgeWidth = ctx.measureText(badgeText).width + 20;
       var badgeX = canvasWidth - padding - badgeWidth - 4;
-      var badgeY = y + 6;
-      var badgeHeight = rowHeight - 12;
+      var badgeY = y + 10;
+      var badgeHeight = rowHeight - 20;
       var r = 4;
 
       ctx.fillStyle = badgeColor;
@@ -595,6 +649,36 @@ function initializeEvents() {
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(badgeText, badgeX + badgeWidth / 2, badgeY + badgeHeight / 2);
+
+      // Feedback badge next to Required/Recommended
+      if (dataset.feedbackType) {
+        var fbText = dataset.feedbackType;
+        ctx.font = "11px Arial, sans-serif";
+        var fbColor = dataset.feedbackType === "explicit" ? "#0dcaf0" : "#ffc107";
+        var fbWidth = ctx.measureText(fbText).width + 14;
+        var fbX = badgeX - fbWidth - 6;
+        var fbY = badgeY + 2;
+        var fbH = badgeHeight - 4;
+
+        ctx.fillStyle = fbColor;
+        ctx.beginPath();
+        ctx.moveTo(fbX + r, fbY);
+        ctx.lineTo(fbX + fbWidth - r, fbY);
+        ctx.quadraticCurveTo(fbX + fbWidth, fbY, fbX + fbWidth, fbY + r);
+        ctx.lineTo(fbX + fbWidth, fbY + fbH - r);
+        ctx.quadraticCurveTo(fbX + fbWidth, fbY + fbH, fbX + fbWidth - r, fbY + fbH);
+        ctx.lineTo(fbX + r, fbY + fbH);
+        ctx.quadraticCurveTo(fbX, fbY + fbH, fbX, fbY + fbH - r);
+        ctx.lineTo(fbX, fbY + r);
+        ctx.quadraticCurveTo(fbX, fbY, fbX + r, fbY);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#212529";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(fbText, fbX + fbWidth / 2, fbY + fbH / 2);
+      }
 
       y += rowHeight;
     });
@@ -629,7 +713,20 @@ function initializeEvents() {
     const exportPreviewArea = document.getElementById("export-preview-area");
     const exportImagePreview = document.getElementById("export-image-preview");
     const exportTextarea = document.getElementById("export-textarea");
+    const exportModalLabel = document.getElementById("exportModalLabel");
     if (!exportModal) return;
+
+    // Set dynamic title
+    var titleMap = {
+      image: "Image Preview",
+      markdown: "Markdown Export",
+      html: "HTML Export",
+      latex: "LaTeX Export",
+      bibtex: "BibTeX Export",
+    };
+    if (exportModalLabel) {
+      exportModalLabel.textContent = titleMap[type] || "Export Preview";
+    }
 
     // Reset
     if (exportPreviewArea) exportPreviewArea.innerHTML = "";
@@ -682,18 +779,102 @@ function initializeEvents() {
     }
   }
 
-  // Export stubs (to be implemented)
+  // Text export functions
   function exportAsMarkdown() {
-    return "# APS Dataset Export\n\n[Markdown Export folgt]";
+    var rows = getFinalDatasets();
+    if (rows.length === 0) return "No datasets to export.";
+    var lines = [];
+    lines.push("# Dataset Recommendation");
+    lines.push("");
+    lines.push("Final: " + rows.length + " | Required: " + requiredDatasetIds.length + " | Recommended: " + recommendedDatasetIds.length);
+    lines.push("");
+    lines.push("| # | Dataset | Feedback | Interactions | Users | Items | Density | Ratio | Type |");
+    lines.push("|---|---|---|---|---|---|---|---|---|");
+    rows.forEach(function (d, i) {
+      var isReq = requiredDatasetIds.includes(d.id);
+      var parts = getDatasetMetaParts(d);
+      var meta = {};
+      parts.forEach(function (p) { meta[p.label] = p.value; });
+      lines.push("| " + (i + 1) + " | " + (d.name || "") + " | " + (meta["Feedback"] || "\u2014") + " | " + (meta["Interactions"] || "\u2014") + " | " + (meta["Users"] || "\u2014") + " | " + (meta["Items"] || "\u2014") + " | " + (meta["Density"] || "\u2014") + " | " + (meta["Ratio"] || "\u2014") + " | " + (isReq ? "Required" : "Recommended") + " |");
+    });
+    lines.push("");
+    lines.push("_Generated by APS Explorer (datasets.recommender-systems.com)_");
+    return lines.join("\n");
   }
+
   function exportAsHtml() {
-    return "<h2>APS Dataset Export</h2><p>HTML Export folgt</p>";
+    var rows = getFinalDatasets();
+    if (rows.length === 0) return "<p>No datasets to export.</p>";
+    var h = [];
+    h.push("<h2>Dataset Recommendation</h2>");
+    h.push("<p>Final: " + rows.length + " | Required: " + requiredDatasetIds.length + " | Recommended: " + recommendedDatasetIds.length + "</p>");
+    h.push("<table class=\"table table-bordered table-striped\">");
+    h.push("<thead><tr><th>#</th><th>Dataset</th><th>Feedback</th><th>Interactions</th><th>Users</th><th>Items</th><th>Density</th><th>Ratio</th><th>Type</th></tr></thead>");
+    h.push("<tbody>");
+    rows.forEach(function (d, i) {
+      var isReq = requiredDatasetIds.includes(d.id);
+      var parts = getDatasetMetaParts(d);
+      var meta = {};
+      parts.forEach(function (p) { meta[p.label] = p.value; });
+      h.push("<tr><td>" + (i + 1) + "</td><td>" + escapeHtml(d.name || "") + "</td><td>" + escapeHtml(d.feedbackType || "\u2014") + "</td><td>" + (meta["Interactions"] || "\u2014") + "</td><td>" + (meta["Users"] || "\u2014") + "</td><td>" + (meta["Items"] || "\u2014") + "</td><td>" + (meta["Density"] || "\u2014") + "</td><td>" + (meta["Ratio"] || "\u2014") + "</td><td>" + (isReq ? "Required" : "Recommended") + "</td></tr>");
+    });
+    h.push("</tbody>");
+    h.push("</table>");
+    h.push("<p><em>Generated by APS Explorer (datasets.recommender-systems.com)</em></p>");
+    return h.join("\n");
   }
+
   function exportAsLatex() {
-    return "% APS Dataset Export\nLaTeX Export folgt";
+    var rows = getFinalDatasets();
+    if (rows.length === 0) return "% No datasets to export.";
+    var lines = [];
+    lines.push("% Dataset Recommendation — APS Explorer");
+    lines.push("\\begin{table}[h]");
+    lines.push("\\centering");
+    lines.push("\\caption{Dataset Recommendation}");
+    lines.push("\\begin{tabular}{lllrrrrrl}");
+    lines.push("\\toprule");
+    lines.push("\\# & Dataset & Feedback & Interactions & Users & Items & Density & Ratio & Type \\\\");
+    lines.push("\\midrule");
+    rows.forEach(function (d, i) {
+      var isReq = requiredDatasetIds.includes(d.id);
+      var interactions = (d.numberOfInteractions != null) ? String(d.numberOfInteractions) : "\u2014";
+      var users = (d.numberOfUsers != null) ? String(d.numberOfUsers) : "\u2014";
+      var items = (d.numberOfItems != null) ? String(d.numberOfItems) : "\u2014";
+      var density = (d.density != null) ? formatDensity(d.density) : "\u2014";
+      var ratio = (d.userItemRatio != null) ? formatRatio(d.userItemRatio) : "\u2014";
+      lines.push((i + 1) + " & " + escapeLatex(d.name || "") + " & " + escapeLatex(d.feedbackType || "\u2014") + " & " + interactions + " & " + users + " & " + items + " & " + density + " & " + ratio + " & " + (isReq ? "Required" : "Recommended") + " \\\\");
+    });
+    lines.push("\\bottomrule");
+    lines.push("\\end{tabular}");
+    lines.push("\\end{table}");
+    return lines.join("\n");
   }
+
   function exportAsBibtex() {
-    return "% APS Dataset Export\n@misc{aps_export, note={BibTeX Export folgt}}";
+    var rows = getFinalDatasets();
+    if (rows.length === 0) return "% No datasets to export.";
+    var lines = [];
+    rows.forEach(function (d) {
+      var key = "aps_" + (d.name || "dataset").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+      var metaParts = getDatasetMetaParts(d);
+      var note = metaParts.map(function (p) { return p.label + ": " + p.value; }).join(", ");
+      lines.push("@dataset{" + key + ",");
+      lines.push("  title        = {" + (d.name || "Untitled") + "},");
+      lines.push("  howpublished = {datasets.recommender-systems.com},");
+      lines.push("  note         = {" + note + "}");
+      lines.push("}");
+      lines.push("");
+    });
+    return lines.join("\n");
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function escapeLatex(str) {
+    return String(str).replace(/&/g, "\\&").replace(/%/g, "\\%").replace(/_/g, "\\_").replace(/\$/g, "\\$").replace(/#/g, "\\#").replace(/\{/g, "\\{").replace(/\}/g, "\\}");
   }
   if (feedbackTypeElement) {
     feedbackTypeElement.addEventListener("change", applyDatasetFilter);
@@ -1045,9 +1226,7 @@ function renderResults() {
     return;
   }
 
-  const finalDatasets = finalDatasetIds
-    .map((id) => datasets.find((d) => d.id === id))
-    .filter((d) => !!d);
+  var finalDatasets = getFinalDatasets();
 
   resultsListElement.innerHTML = "";
 
@@ -1059,26 +1238,56 @@ function renderResults() {
     return;
   }
 
-  resultsSummaryElement.textContent = `Final: ${finalDatasets.length} | Required: ${requiredDatasetIds.length} | Recommended: ${recommendedDatasetIds.length}`;
+  resultsSummaryElement.textContent = "Final: " + finalDatasets.length + " | Required: " + requiredDatasetIds.length + " | Recommended: " + recommendedDatasetIds.length;
 
-  finalDatasets.forEach((dataset) => {
-    const isRequired = requiredDatasetIds.includes(dataset.id);
+  finalDatasets.forEach(function (dataset) {
+    var isRequired = requiredDatasetIds.includes(dataset.id);
+    var metaParts = getDatasetMetaParts(dataset);
 
-    const listItem = document.createElement("li");
-    listItem.className =
-      "list-group-item d-flex justify-content-between align-items-center";
+    var listItem = document.createElement("li");
+    listItem.className = "list-group-item";
 
-    const label = document.createElement("span");
-    label.textContent = dataset.name;
+    var headerRow = document.createElement("div");
+    headerRow.className = "d-flex justify-content-between align-items-start";
 
-    const badge = document.createElement("span");
-    badge.className = isRequired
-      ? "badge text-bg-primary"
-      : "badge text-bg-success";
-    badge.textContent = isRequired ? "Required" : "Recommended";
+    var nameDiv = document.createElement("div");
+    var nameStrong = document.createElement("strong");
+    nameStrong.textContent = dataset.name;
+    nameDiv.appendChild(nameStrong);
 
-    listItem.appendChild(label);
-    listItem.appendChild(badge);
+    var badgesDiv = document.createElement("div");
+    badgesDiv.className = "text-nowrap";
+
+    var feedbackBadge = document.createElement("span");
+    feedbackBadge.className = "badge " + (dataset.feedbackType === "explicit" ? "text-bg-info" : "text-bg-warning") + " me-1";
+    feedbackBadge.textContent = dataset.feedbackType || "—";
+    badgesDiv.appendChild(feedbackBadge);
+
+    var typeBadge = document.createElement("span");
+    typeBadge.className = isRequired ? "badge text-bg-primary" : "badge text-bg-success";
+    typeBadge.textContent = isRequired ? "Required" : "Recommended";
+    badgesDiv.appendChild(typeBadge);
+
+    headerRow.appendChild(nameDiv);
+    headerRow.appendChild(badgesDiv);
+    listItem.appendChild(headerRow);
+
+    if (metaParts.length > 0) {
+      var metaDiv = document.createElement("div");
+      metaDiv.className = "text-muted small mt-1";
+      metaParts.forEach(function (part, idx) {
+        if (idx > 0) {
+          var sep = document.createTextNode(" \u00B7 ");
+          metaDiv.appendChild(sep);
+        }
+        var span = document.createElement("span");
+        span.className = "me-2";
+        span.textContent = part.label + ": " + part.value;
+        metaDiv.appendChild(span);
+      });
+      listItem.appendChild(metaDiv);
+    }
+
     resultsListElement.appendChild(listItem);
   });
 
