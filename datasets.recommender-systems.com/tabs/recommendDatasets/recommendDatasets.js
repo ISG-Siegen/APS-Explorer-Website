@@ -1189,7 +1189,7 @@ function generateRecommendation() {
     effectiveTargetCount = requiredUnique.length;
     targetCountElement.value = effectiveTargetCount;
     warningText =
-      "Target count was smaller than input datasets and was adjusted.";
+      "Target count was smaller than seed datasets and was adjusted.";
   }
 
   const missingCount = Math.max(
