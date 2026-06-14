@@ -8,6 +8,7 @@ include_once('apis/algorithm.php');
 include_once('apis/dataset.php');
 include_once('apis/performance-result.php');
 include_once('apis/admin.php');
+include_once('apis/usage-log.php');
 
 $pdo = Database::getConnection();  
 if ($pdo === null) {
@@ -134,6 +135,29 @@ else if ($action === 'result') {
         }
 
         PerformanceResult::getPerformanceResults($pdo, $ids);
+    }
+}
+else if ($action === 'log') {
+    $task = isset($_REQUEST['task']) ? $_REQUEST['task'] : null;
+    if ($task === 'saveUsage') {
+        $strBody = file_get_contents('php://input');
+        $body = json_decode($strBody, true);
+        UsageLog::saveUsageLog($pdo, $body);
+    }
+    else if ($task === 'getUsageLogs') {
+        UsageLog::getUsageLogs($pdo);
+    }
+    else if ($task === 'deleteAllUsageLogs') {
+        UsageLog::deleteAllUsageLogs($pdo);
+    }
+    else {
+        header('Content-Type: application/json');
+        http_response_code(400);
+        echo json_encode([
+            "isSuccess" => false,
+            "statusCode" => 400,
+            "message" => "Wrong task"
+        ]);
     }
 }
 else if ($action === 'admin') {
