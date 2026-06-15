@@ -770,3 +770,56 @@ body {
     margin-bottom: 2.5rem;
   }
 }
+
+.range-slider {
+  margin: 8px 0 4px;
+  height: 4px;
+}
+
+.range-slider .noUi-connect {
+  background: #0d6efd;
+}
+
+.range-slider .noUi-horizontal .noUi-handle {
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #0d6efd;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  right: -8px;
+  top: -7px;
+}
+
+.range-slider .noUi-handle::before,
+.range-slider .noUi-handle::after {
+  display: none;
+}
+
+.range-slider .noUi-target {
+  background: #e5e7eb;
+  border: none;
+  border-radius: 3px;
+  box-shadow: none;
+}
+
+.range-input-row {
+  margin-top: 2px;
+}
+
+.range-input {
+  width: 45% !important;
+  text-align: center;
+  font-size: 0.7rem;
+  padding: 1px 3px !important;
+  height: auto !important;
+}
+
+.range-slider + .range-input-row {
+  margin-top: 2px;
+}
+
+.card-body .form-label {
+  margin-bottom: 2px;
+  font-size: 0.85rem;
+}

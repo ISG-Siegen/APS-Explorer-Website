@@ -27,7 +27,7 @@
           aria-expanded="false"
           aria-controls="collapseRequiredDatasets"
         >
-           <span>Seed Datasets</span>
+          <span>Seed Datasets</span>
           <span id="required-dataset-header" style="margin-left: auto"
             >(None selected)</span
           >
@@ -49,7 +49,7 @@
               id="required-dataset-input"
               class="form-control required-dataset-input"
               type="text"
-               placeholder="Type to add seed datasets"
+              placeholder="Type to add seed datasets"
               autocomplete="off"
             />
           </div>
@@ -106,8 +106,8 @@
       <div
         style="
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-          gap: 12px;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 20px 50px;
         "
       >
         <div>
@@ -132,263 +132,210 @@
           </select>
         </div>
         <div>
-          <label for="recommend-min-interactions" class="form-label"
-            >Min Interactions</label
-          >
-          <input
-            id="recommend-min-interactions"
-            class="form-control"
-            type="number"
-            min="0"
-            step="1"
-            placeholder="0"
-          />
+          <label class="form-label fw-semibold">Interactions</label>
+          <div id="slider-interactions" class="range-slider"></div>
+          <div class="d-flex justify-content-between gap-2 range-input-row">
+            <input
+              id="slider-interactions-min"
+              class="form-control form-control-sm range-input"
+              type="number"
+              value="0"
+            />
+            <input
+              id="slider-interactions-max"
+              class="form-control form-control-sm range-input"
+              type="number"
+              value="0"
+            />
+          </div>
         </div>
         <div>
-          <label for="recommend-max-interactions" class="form-label"
-            >Max Interactions</label
-          >
-          <input
-            id="recommend-max-interactions"
-            class="form-control"
-            type="number"
-            min="0"
-            step="1"
-            placeholder="No limit"
-          />
-        </div>
-
-        <div>
-          <label for="recommend-min-users" class="form-label">Min Users</label>
-          <input
-            id="recommend-min-users"
-            class="form-control"
-            type="number"
-            step="1"
-            placeholder="No min"
-          />
+          <label class="form-label fw-semibold">Users</label>
+          <div id="slider-users" class="range-slider"></div>
+          <div class="d-flex justify-content-between gap-2 range-input-row">
+            <input
+              id="slider-users-min"
+              class="form-control form-control-sm range-input"
+              type="number"
+              value="0"
+            />
+            <input
+              id="slider-users-max"
+              class="form-control form-control-sm range-input"
+              type="number"
+              value="0"
+            />
+          </div>
         </div>
         <div>
-          <label for="recommend-max-users" class="form-label">Max Users</label>
-          <input
-            id="recommend-max-users"
-            class="form-control"
-            type="number"
-            step="1"
-            placeholder="No max"
-          />
+          <label class="form-label fw-semibold">Items</label>
+          <div id="slider-items" class="range-slider"></div>
+          <div class="d-flex justify-content-between gap-2 range-input-row">
+            <input
+              id="slider-items-min"
+              class="form-control form-control-sm range-input"
+              type="number"
+              value="0"
+            />
+            <input
+              id="slider-items-max"
+              class="form-control form-control-sm range-input"
+              type="number"
+              value="0"
+            />
+          </div>
         </div>
         <div>
-          <label for="recommend-min-items" class="form-label">Min Items</label>
-          <input
-            id="recommend-min-items"
-            class="form-control"
-            type="number"
-            step="1"
-            placeholder="No min"
-          />
+          <label class="form-label fw-semibold">User-Item Ratio</label>
+          <div id="slider-ratio" class="range-slider"></div>
+          <div class="d-flex justify-content-between gap-2 range-input-row">
+            <input
+              id="slider-ratio-min"
+              class="form-control form-control-sm range-input"
+              type="number"
+              step="0.1"
+              value="0"
+            />
+            <input
+              id="slider-ratio-max"
+              class="form-control form-control-sm range-input"
+              type="number"
+              step="0.1"
+              value="0"
+            />
+          </div>
         </div>
         <div>
-          <label for="recommend-max-items" class="form-label">Max Items</label>
-          <input
-            id="recommend-max-items"
-            class="form-control"
-            type="number"
-            step="1"
-            placeholder="No max"
-          />
+          <label class="form-label fw-semibold">Density</label>
+          <div id="slider-density" class="range-slider"></div>
+          <div class="d-flex justify-content-between gap-2 range-input-row">
+            <input
+              id="slider-density-min"
+              class="form-control form-control-sm range-input"
+              type="number"
+              step="0.001"
+              value="0"
+            />
+            <input
+              id="slider-density-max"
+              class="form-control form-control-sm range-input"
+              type="number"
+              step="0.001"
+              value="0"
+            />
+          </div>
         </div>
         <div>
-          <label for="recommend-min-user-item-ratio" class="form-label"
-            >Min User-Item Ratio</label
-          >
-          <input
-            id="recommend-min-user-item-ratio"
-            class="form-control"
-            type="number"
-            step="any"
-            placeholder="No min"
-          />
+          <label class="form-label fw-semibold">Max Rating/User</label>
+          <div id="slider-max-user" class="range-slider"></div>
+          <div class="d-flex justify-content-between gap-2 range-input-row">
+            <input
+              id="slider-max-user-min"
+              class="form-control form-control-sm range-input"
+              type="number"
+              value="0"
+            />
+            <input
+              id="slider-max-user-max"
+              class="form-control form-control-sm range-input"
+              type="number"
+              value="0"
+            />
+          </div>
         </div>
         <div>
-          <label for="recommend-max-user-item-ratio" class="form-label"
-            >Max User-Item Ratio</label
-          >
-          <input
-            id="recommend-max-user-item-ratio"
-            class="form-control"
-            type="number"
-            step="any"
-            placeholder="No max"
-          />
+          <label class="form-label fw-semibold">Min Rating/User</label>
+          <div id="slider-min-user" class="range-slider"></div>
+          <div class="d-flex justify-content-between gap-2 range-input-row">
+            <input
+              id="slider-min-user-min"
+              class="form-control form-control-sm range-input"
+              type="number"
+              value="0"
+            />
+            <input
+              id="slider-min-user-max"
+              class="form-control form-control-sm range-input"
+              type="number"
+              value="0"
+            />
+          </div>
         </div>
         <div>
-          <label for="recommend-min-density" class="form-label"
-            >Min Density</label
-          >
-          <input
-            id="recommend-min-density"
-            class="form-control"
-            type="number"
-            step="any"
-            placeholder="No min"
-          />
+          <label class="form-label fw-semibold">Max Rating/Item</label>
+          <div id="slider-max-item" class="range-slider"></div>
+          <div class="d-flex justify-content-between gap-2 range-input-row">
+            <input
+              id="slider-max-item-min"
+              class="form-control form-control-sm range-input"
+              type="number"
+              value="0"
+            />
+            <input
+              id="slider-max-item-max"
+              class="form-control form-control-sm range-input"
+              type="number"
+              value="0"
+            />
+          </div>
         </div>
         <div>
-          <label for="recommend-max-density" class="form-label"
-            >Max Density</label
-          >
-          <input
-            id="recommend-max-density"
-            class="form-control"
-            type="number"
-            step="any"
-            placeholder="No max"
-          />
+          <label class="form-label fw-semibold">Min Rating/Item</label>
+          <div id="slider-min-item" class="range-slider"></div>
+          <div class="d-flex justify-content-between gap-2 range-input-row">
+            <input
+              id="slider-min-item-min"
+              class="form-control form-control-sm range-input"
+              type="number"
+              value="0"
+            />
+            <input
+              id="slider-min-item-max"
+              class="form-control form-control-sm range-input"
+              type="number"
+              value="0"
+            />
+          </div>
         </div>
         <div>
-          <label for="recommend-min-max-user" class="form-label"
-            >Min Max Rating/User</label
-          >
-          <input
-            id="recommend-min-max-user"
-            class="form-control"
-            type="number"
-            step="1"
-            placeholder="No min"
-          />
+          <label class="form-label fw-semibold">Mean Ratings/User</label>
+          <div id="slider-mean-user" class="range-slider"></div>
+          <div class="d-flex justify-content-between gap-2 range-input-row">
+            <input
+              id="slider-mean-user-min"
+              class="form-control form-control-sm range-input"
+              type="number"
+              step="0.1"
+              value="0"
+            />
+            <input
+              id="slider-mean-user-max"
+              class="form-control form-control-sm range-input"
+              type="number"
+              step="0.1"
+              value="0"
+            />
+          </div>
         </div>
         <div>
-          <label for="recommend-max-max-user" class="form-label"
-            >Max Max Rating/User</label
-          >
-          <input
-            id="recommend-max-max-user"
-            class="form-control"
-            type="number"
-            step="1"
-            placeholder="No max"
-          />
-        </div>
-        <div>
-          <label for="recommend-min-min-user" class="form-label"
-            >Min Min Rating/User</label
-          >
-          <input
-            id="recommend-min-min-user"
-            class="form-control"
-            type="number"
-            step="1"
-            placeholder="No min"
-          />
-        </div>
-        <div>
-          <label for="recommend-max-min-user" class="form-label"
-            >Max Min Rating/User</label
-          >
-          <input
-            id="recommend-max-min-user"
-            class="form-control"
-            type="number"
-            step="1"
-            placeholder="No max"
-          />
-        </div>
-        <div>
-          <label for="recommend-min-max-item" class="form-label"
-            >Min Max Rating/Item</label
-          >
-          <input
-            id="recommend-min-max-item"
-            class="form-control"
-            type="number"
-            step="1"
-            placeholder="No min"
-          />
-        </div>
-        <div>
-          <label for="recommend-max-max-item" class="form-label"
-            >Max Max Rating/Item</label
-          >
-          <input
-            id="recommend-max-max-item"
-            class="form-control"
-            type="number"
-            step="1"
-            placeholder="No max"
-          />
-        </div>
-        <div>
-          <label for="recommend-min-min-item" class="form-label"
-            >Min Min Rating/Item</label
-          >
-          <input
-            id="recommend-min-min-item"
-            class="form-control"
-            type="number"
-            step="1"
-            placeholder="No min"
-          />
-        </div>
-        <div>
-          <label for="recommend-max-min-item" class="form-label"
-            >Max Min Rating/Item</label
-          >
-          <input
-            id="recommend-max-min-item"
-            class="form-control"
-            type="number"
-            step="1"
-            placeholder="No max"
-          />
-        </div>
-        <div>
-          <label for="recommend-min-mean-user" class="form-label"
-            >Min Mean Ratings/User</label
-          >
-          <input
-            id="recommend-min-mean-user"
-            class="form-control"
-            type="number"
-            step="any"
-            placeholder="No min"
-          />
-        </div>
-        <div>
-          <label for="recommend-max-mean-user" class="form-label"
-            >Max Mean Ratings/User</label
-          >
-          <input
-            id="recommend-max-mean-user"
-            class="form-control"
-            type="number"
-            step="any"
-            placeholder="No max"
-          />
-        </div>
-        <div>
-          <label for="recommend-min-mean-item" class="form-label"
-            >Min Mean Ratings/Item</label
-          >
-          <input
-            id="recommend-min-mean-item"
-            class="form-control"
-            type="number"
-            step="any"
-            placeholder="No min"
-          />
-        </div>
-        <div>
-          <label for="recommend-max-mean-item" class="form-label"
-            >Max Mean Ratings/Item</label
-          >
-          <input
-            id="recommend-max-mean-item"
-            class="form-control"
-            type="number"
-            step="any"
-            placeholder="No max"
-          />
+          <label class="form-label fw-semibold">Mean Ratings/Item</label>
+          <div id="slider-mean-item" class="range-slider"></div>
+          <div class="d-flex justify-content-between gap-2 range-input-row">
+            <input
+              id="slider-mean-item-min"
+              class="form-control form-control-sm range-input"
+              type="number"
+              step="0.1"
+              value="0"
+            />
+            <input
+              id="slider-mean-item-max"
+              class="form-control form-control-sm range-input"
+              type="number"
+              step="0.1"
+              value="0"
+            />
+          </div>
         </div>
       </div>
 

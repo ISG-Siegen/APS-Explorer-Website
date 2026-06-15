@@ -29,6 +29,9 @@
     <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"></script>
 
+    <link href="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.js"></script>
+
     <script type="module" src="./util.js?v=1"></script>
     <script type="module" src="./loading.js?v=1"></script>
     <script type="module" src="./dynamicContent.js?v=1"></script>
@@ -91,6 +94,12 @@
           <button id="compare-datasets-btn" class="nav-link" id="dataset-info-tab" data-bs-toggle="tab" data-bs-target="#dataset-info-tab-pane"
             type="button" role="tab" aria-controls="dataset-info-tab-pane" aria-selected="false">
             Dataset Comparison
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button id="admin-tab-btn" class="nav-link" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin-tab-pane"
+            type="button" role="tab" aria-controls="admin-tab-pane" aria-selected="false">
+            Usage Logs
           </button>
         </li>
       </ul>

@@ -24,28 +24,7 @@ var selectAllDatasetButtonText = null;
 
 var targetCountElement = null;
 var feedbackTypeElement = null;
-var minInteractionsElement = null;
-var maxInteractionsElement = null;
-var minUsersElement = null;
-var maxUsersElement = null;
-var minItemsElement = null;
-var maxItemsElement = null;
-var minUserItemRatioElement = null;
-var maxUserItemRatioElement = null;
-var minDensityElement = null;
-var maxDensityElement = null;
-var minMaxUserElement = null;
-var maxMaxUserElement = null;
-var minMinUserElement = null;
-var maxMinUserElement = null;
-var minMaxItemElement = null;
-var maxMaxItemElement = null;
-var minMinItemElement = null;
-var maxMinItemElement = null;
-var minMeanUserElement = null;
-var maxMeanUserElement = null;
-var minMeanItemElement = null;
-var maxMeanItemElement = null;
+
 var generateButtonElement = null;
 var openApsButtonElement = null;
 var shareButtonElement = null;
@@ -72,12 +51,12 @@ function formatNumber(n) {
 
 function formatDensity(d) {
   if (d == null || !Number.isFinite(Number(d))) return "—";
-  return (Number(d) * 100).toFixed(2) + "%";
+  return (Number(d) * 100).toFixed(1) + "%";
 }
 
 function formatRatio(r) {
   if (r == null || !Number.isFinite(Number(r))) return "—";
-  return Number(r).toFixed(2);
+  return Number(r).toFixed(1);
 }
 
 function getDatasetMetaParts(dataset) {
@@ -110,66 +89,16 @@ function getFinalDatasets() {
 }
 
 var metadataRangeFields = [
-  {
-    key: "numberOfUsers",
-    minId: "recommend-min-users",
-    maxId: "recommend-max-users",
-    step: 1,
-  },
-  {
-    key: "numberOfItems",
-    minId: "recommend-min-items",
-    maxId: "recommend-max-items",
-    step: 1,
-  },
-  {
-    key: "userItemRatio",
-    minId: "recommend-min-user-item-ratio",
-    maxId: "recommend-max-user-item-ratio",
-    step: "any",
-  },
-  {
-    key: "density",
-    minId: "recommend-min-density",
-    maxId: "recommend-max-density",
-    step: "any",
-  },
-  {
-    key: "highestNumberOfRatingBySingleUser",
-    minId: "recommend-min-max-user",
-    maxId: "recommend-max-max-user",
-    step: 1,
-  },
-  {
-    key: "lowestNumberOfRatingBySingleUser",
-    minId: "recommend-min-min-user",
-    maxId: "recommend-max-min-user",
-    step: 1,
-  },
-  {
-    key: "highestNumberOfRatingOnSingleItem",
-    minId: "recommend-min-max-item",
-    maxId: "recommend-max-max-item",
-    step: 1,
-  },
-  {
-    key: "lowestNumberOfRatingOnSingleItem",
-    minId: "recommend-min-min-item",
-    maxId: "recommend-max-min-item",
-    step: 1,
-  },
-  {
-    key: "meanNumberOfRatingsByUser",
-    minId: "recommend-min-mean-user",
-    maxId: "recommend-max-mean-user",
-    step: "any",
-  },
-  {
-    key: "meanNumberOfRatingsOnItem",
-    minId: "recommend-min-mean-item",
-    maxId: "recommend-max-mean-item",
-    step: "any",
-  },
+  { key: "numberOfUsers", sliderId: "slider-users", step: 1, format: formatNumber },
+  { key: "numberOfItems", sliderId: "slider-items", step: 1, format: formatNumber },
+  { key: "userItemRatio", sliderId: "slider-ratio", step: null, format: formatRatio },
+  { key: "density", sliderId: "slider-density", step: null, format: formatDensity },
+  { key: "highestNumberOfRatingBySingleUser", sliderId: "slider-max-user", step: 1, format: formatNumber },
+  { key: "lowestNumberOfRatingBySingleUser", sliderId: "slider-min-user", step: 1, format: formatNumber },
+  { key: "highestNumberOfRatingOnSingleItem", sliderId: "slider-max-item", step: 1, format: formatNumber },
+  { key: "lowestNumberOfRatingOnSingleItem", sliderId: "slider-min-item", step: 1, format: formatNumber },
+  { key: "meanNumberOfRatingsByUser", sliderId: "slider-mean-user", step: null, format: formatNumber },
+  { key: "meanNumberOfRatingsOnItem", sliderId: "slider-mean-item", step: null, format: formatNumber },
 ];
 
 var metadataRangeBounds = {};
@@ -218,36 +147,6 @@ function mapElements() {
 
   targetCountElement = document.getElementById("recommend-target-count");
   feedbackTypeElement = document.getElementById("recommend-feedback-type");
-  minInteractionsElement = document.getElementById(
-    "recommend-min-interactions",
-  );
-  maxInteractionsElement = document.getElementById(
-    "recommend-max-interactions",
-  );
-  minUsersElement = document.getElementById("recommend-min-users");
-  maxUsersElement = document.getElementById("recommend-max-users");
-  minItemsElement = document.getElementById("recommend-min-items");
-  maxItemsElement = document.getElementById("recommend-max-items");
-  minUserItemRatioElement = document.getElementById(
-    "recommend-min-user-item-ratio",
-  );
-  maxUserItemRatioElement = document.getElementById(
-    "recommend-max-user-item-ratio",
-  );
-  minDensityElement = document.getElementById("recommend-min-density");
-  maxDensityElement = document.getElementById("recommend-max-density");
-  minMaxUserElement = document.getElementById("recommend-min-max-user");
-  maxMaxUserElement = document.getElementById("recommend-max-max-user");
-  minMinUserElement = document.getElementById("recommend-min-min-user");
-  maxMinUserElement = document.getElementById("recommend-max-min-user");
-  minMaxItemElement = document.getElementById("recommend-min-max-item");
-  maxMaxItemElement = document.getElementById("recommend-max-max-item");
-  minMinItemElement = document.getElementById("recommend-min-min-item");
-  maxMinItemElement = document.getElementById("recommend-max-min-item");
-  minMeanUserElement = document.getElementById("recommend-min-mean-user");
-  maxMeanUserElement = document.getElementById("recommend-max-mean-user");
-  minMeanItemElement = document.getElementById("recommend-min-mean-item");
-  maxMeanItemElement = document.getElementById("recommend-max-mean-item");
   generateButtonElement = document.getElementById("recommend-generate-btn");
   openApsButtonElement = document.getElementById("recommend-open-aps-btn");
   shareButtonElement = document.getElementById("recommend-share-btn");
@@ -349,42 +248,81 @@ function initializeSettingsFromQuery(queryOptions) {
       feedbackTypeElement.value = mappedValue;
     }
   }
-  if (queryOptions?.minInteractions && minInteractionsElement) {
-    minInteractionsElement.value = queryOptions.minInteractions;
-  }
-  if (queryOptions?.maxInteractions && maxInteractionsElement) {
-    maxInteractionsElement.value = queryOptions.maxInteractions;
+  if (queryOptions?.minInteractions || queryOptions?.maxInteractions) {
+    var sliderEl = document.getElementById("slider-interactions");
+    if (sliderEl && sliderEl.noUiSlider) {
+      sliderEl.noUiSlider.set([
+        queryOptions?.minInteractions
+          ? Number(queryOptions.minInteractions)
+          : interactionsBounds.min,
+        queryOptions?.maxInteractions
+          ? Number(queryOptions.maxInteractions)
+          : interactionsBounds.max,
+      ]);
+    }
   }
 
   readActiveFiltersFromUi();
 }
 
 function setInteractionBounds() {
-  const interactions = datasets
-    .map((dataset) => Number(dataset.numberOfInteractions))
-    .filter((value) => Number.isFinite(value));
+  var values = datasets
+    .map(function (d) { return Number(d.numberOfInteractions); })
+    .filter(function (v) { return Number.isFinite(v); });
 
-  if (interactions.length === 0) {
+  if (values.length === 0) {
     interactionsBounds = { min: null, max: null };
     return;
   }
 
   interactionsBounds = {
-    min: Math.min(...interactions),
-    max: Math.max(...interactions),
+    min: Math.min.apply(null, values),
+    max: Math.max.apply(null, values),
   };
 
-  if (minInteractionsElement) {
-    minInteractionsElement.min = String(interactionsBounds.min);
-    minInteractionsElement.max = String(interactionsBounds.max);
-    minInteractionsElement.value = String(interactionsBounds.min);
+  var sliderEl = document.getElementById("slider-interactions");
+  if (!sliderEl) return;
+
+  if (sliderEl.noUiSlider) {
+    sliderEl.noUiSlider.destroy();
   }
 
-  if (maxInteractionsElement) {
-    maxInteractionsElement.min = String(interactionsBounds.min);
-    maxInteractionsElement.max = String(interactionsBounds.max);
-    maxInteractionsElement.value = String(interactionsBounds.max);
+  noUiSlider.create(sliderEl, {
+    start: [interactionsBounds.min, interactionsBounds.max],
+    connect: true,
+    step: 1,
+    range: {
+      min: interactionsBounds.min,
+      max: interactionsBounds.max,
+    },
+  });
+
+  sliderEl.noUiSlider.on("update", function (vals) {
+    var minInp = document.getElementById("slider-interactions-min");
+    var maxInp = document.getElementById("slider-interactions-max");
+    if (minInp) minInp.value = String(Math.round(Number(vals[0])));
+    if (maxInp) maxInp.value = String(Math.round(Number(vals[1])));
+  });
+
+  sliderEl.noUiSlider.on("change", function () {
+    applyDatasetFilter();
+  });
+
+  function onInteractionInput() {
+    var minInp = document.getElementById("slider-interactions-min");
+    var maxInp = document.getElementById("slider-interactions-max");
+    var minVal = minInp ? Number(minInp.value) : NaN;
+    var maxVal = maxInp ? Number(maxInp.value) : NaN;
+    if (Number.isFinite(minVal) && Number.isFinite(maxVal)) {
+      sliderEl.noUiSlider.set([minVal, maxVal]);
+      applyDatasetFilter();
+    }
   }
+
+  var minInp = document.getElementById("slider-interactions-min");
+  var maxInp = document.getElementById("slider-interactions-max");
+  if (minInp) minInp.addEventListener("change", onInteractionInput);
+  if (maxInp) maxInp.addEventListener("change", onInteractionInput);
 }
 
 function initializeCandidateDatasetFilter(queryOptions) {
@@ -879,22 +817,6 @@ function initializeEvents() {
   if (feedbackTypeElement) {
     feedbackTypeElement.addEventListener("change", applyDatasetFilter);
   }
-  if (minInteractionsElement) {
-    minInteractionsElement.addEventListener("change", applyDatasetFilter);
-  }
-  if (maxInteractionsElement) {
-    maxInteractionsElement.addEventListener("change", applyDatasetFilter);
-  }
-  metadataRangeFields.forEach((field) => {
-    const minEl = document.getElementById(field.minId);
-    const maxEl = document.getElementById(field.maxId);
-    if (minEl) {
-      minEl.addEventListener("change", applyDatasetFilter);
-    }
-    if (maxEl) {
-      maxEl.addEventListener("change", applyDatasetFilter);
-    }
-  });
   if (targetCountElement) {
     targetCountElement.addEventListener("change", applyDatasetFilter);
   }
@@ -1211,6 +1133,48 @@ function generateRecommendation() {
 
   renderResults();
 
+  var logRanges = {};
+  for (var key in activeFilters.metadataRanges) {
+    var range = activeFilters.metadataRanges[key];
+    var bounds = metadataRangeBounds[key];
+    if (bounds && range.min === bounds.min && range.max === bounds.max) {
+      continue;
+    }
+    logRanges[key] = range;
+  }
+
+  var logInteractions = "all";
+  if (activeFilters.minInteractions != null || activeFilters.maxInteractions != null) {
+    var atDefault = interactionsBounds.min != null && interactionsBounds.max != null
+      && activeFilters.minInteractions === interactionsBounds.min
+      && activeFilters.maxInteractions === interactionsBounds.max;
+    if (!atDefault) {
+      logInteractions = {
+        min: activeFilters.minInteractions,
+        max: activeFilters.maxInteractions,
+      };
+    }
+  }
+
+  var logPayload = {
+    seedDatasets: requiredUnique,
+    datasetFilter: selectedDatasets,
+    filters: {
+      feedbackType: activeFilters.feedbackType,
+      interactions: logInteractions,
+      metadataRanges: logRanges,
+      targetCount: targetCount,
+      candidatePoolSize: poolWithoutRequired.length,
+    },
+    resultCount: finalDatasetIds.length,
+    recommendedDatasets: finalDatasetIds,
+  };
+  fetch("./index.php?action=log&task=saveUsage", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(logPayload),
+  }).catch(function () {});
+
   if (warningText) {
     setStatus(warningText, "warning");
   } else {
@@ -1405,116 +1369,96 @@ function isDefaultMetadataRange(key, range) {
   return minMatches && maxMatches;
 }
 
+function readRangesFromSlider(sliderId) {
+  var sliderEl = document.getElementById(sliderId);
+  if (!sliderEl || !sliderEl.noUiSlider) return { min: null, max: null };
+  var vals = sliderEl.noUiSlider.get();
+  var min = Number(vals[0]);
+  var max = Number(vals[1]);
+  return { min: Number.isFinite(min) ? min : null, max: Number.isFinite(max) ? max : null };
+}
+
 function readActiveFiltersFromUi() {
-  const minInteractions = Number(minInteractionsElement?.value);
-  const maxInteractions = Number(maxInteractionsElement?.value);
-  const boundsMin = interactionsBounds.min;
-  const boundsMax = interactionsBounds.max;
-
-  if (minInteractionsElement && Number.isFinite(boundsMin)) {
-    const minValue = Number(minInteractionsElement.value);
-    if (Number.isFinite(minValue) && minValue < boundsMin) {
-      minInteractionsElement.value = String(boundsMin);
-    }
-    if (Number.isFinite(minValue) && Number.isFinite(boundsMax)) {
-      if (minValue > boundsMax) {
-        minInteractionsElement.value = String(boundsMax);
-      }
-    }
-  }
-
-  if (maxInteractionsElement && Number.isFinite(boundsMax)) {
-    const maxValue = Number(maxInteractionsElement.value);
-    if (Number.isFinite(maxValue) && maxValue > boundsMax) {
-      maxInteractionsElement.value = String(boundsMax);
-    }
-    if (Number.isFinite(maxValue) && Number.isFinite(boundsMin)) {
-      if (maxValue < boundsMin) {
-        maxInteractionsElement.value = String(boundsMin);
-      }
-    }
-  }
+  var interactionVals = readRangesFromSlider("slider-interactions");
 
   activeFilters = {
     feedbackType: feedbackTypeElement?.value || "all",
-    minInteractions:
-      minInteractionsElement &&
-      minInteractionsElement.value !== "" &&
-      Number.isFinite(Number(minInteractionsElement.value))
-        ? Number(minInteractionsElement.value)
-        : null,
-    maxInteractions:
-      maxInteractionsElement &&
-      maxInteractionsElement.value !== "" &&
-      Number.isFinite(Number(maxInteractionsElement.value))
-        ? Number(maxInteractionsElement.value)
-        : null,
-    metadataRanges: readMetadataRangesFromUi(),
+    minInteractions: interactionVals.min,
+    maxInteractions: interactionVals.max,
+    metadataRanges: {},
   };
-}
 
-function readMetadataRangesFromUi() {
-  const ranges = {};
-
-  metadataRangeFields.forEach((field) => {
-    const minEl = document.getElementById(field.minId);
-    const maxEl = document.getElementById(field.maxId);
-    const minValue = minEl ? Number(minEl.value) : NaN;
-    const maxValue = maxEl ? Number(maxEl.value) : NaN;
-
-    ranges[field.key] = {
-      min:
-        minEl && minEl.value !== "" && Number.isFinite(minValue)
-          ? minValue
-          : null,
-      max:
-        maxEl && maxEl.value !== "" && Number.isFinite(maxValue)
-          ? maxValue
-          : null,
-    };
+  metadataRangeFields.forEach(function (field) {
+    activeFilters.metadataRanges[field.key] = readRangesFromSlider(field.sliderId);
   });
-
-  return ranges;
 }
 
 function setMetadataRangeBounds() {
-  metadataRangeFields.forEach((field) => {
-    const values = datasets
-      .map((dataset) => Number(dataset[field.key]))
-      .filter((value) => Number.isFinite(value));
+  metadataRangeFields.forEach(function (field) {
+    var values = datasets
+      .map(function (d) { return Number(d[field.key]); })
+      .filter(function (v) { return Number.isFinite(v); });
 
-    if (values.length === 0) {
-      return;
+    if (values.length === 0) return;
+
+    var rawMin = Math.min.apply(null, values);
+    var rawMax = Math.max.apply(null, values);
+    var fmtMin = Number(formatMinRangeValue(rawMin));
+    var fmtMax = Number(formatMaxRangeValue(rawMax));
+    metadataRangeBounds[field.key] = { min: fmtMin, max: fmtMax };
+
+    var sliderEl = document.getElementById(field.sliderId);
+    if (!sliderEl) return;
+
+    if (sliderEl.noUiSlider) {
+      sliderEl.noUiSlider.destroy();
     }
 
-    const minValue = Math.min(...values);
-    const maxValue = Math.max(...values);
-    const formattedMin = formatMinRangeValue(minValue, field.step);
-    const formattedMax = formatMaxRangeValue(maxValue, field.step);
-    metadataRangeBounds[field.key] = {
-      min: Number(formattedMin),
-      max: Number(formattedMax),
+    var rangeMin = fmtMin === fmtMax ? fmtMin - 1 : fmtMin;
+    var rangeMax = fmtMax === fmtMin ? fmtMax + 1 : fmtMax;
+
+    var createOptions = {
+      start: [fmtMin, fmtMax],
+      connect: true,
+      range: {
+        min: rangeMin,
+        max: rangeMax,
+      },
     };
 
-    const minEl = document.getElementById(field.minId);
-    const maxEl = document.getElementById(field.maxId);
+    if (field.step !== null) {
+      createOptions.step = field.step;
+    }
 
-    if (minEl) {
-      minEl.min = formattedMin;
-      minEl.max = formattedMax;
-      if (field.step !== undefined) {
-        minEl.step = String(field.step);
+    noUiSlider.create(sliderEl, createOptions);
+
+    sliderEl.noUiSlider.on("update", function (vals) {
+      var minInp = document.getElementById(field.sliderId + "-min");
+      var maxInp = document.getElementById(field.sliderId + "-max");
+      if (minInp) minInp.value = String(Number(vals[0]));
+      if (maxInp) maxInp.value = String(Number(vals[1]));
+    });
+
+    sliderEl.noUiSlider.on("change", function () {
+      applyDatasetFilter();
+    });
+
+    (function (sEl) {
+      function onInput() {
+        var minInp = document.getElementById(sEl.id + "-min");
+        var maxInp = document.getElementById(sEl.id + "-max");
+        var minVal = minInp ? Number(minInp.value) : NaN;
+        var maxVal = maxInp ? Number(maxInp.value) : NaN;
+        if (Number.isFinite(minVal) && Number.isFinite(maxVal)) {
+          sEl.noUiSlider.set([minVal, maxVal]);
+          applyDatasetFilter();
+        }
       }
-      minEl.value = formattedMin;
-    }
-    if (maxEl) {
-      maxEl.min = formattedMin;
-      maxEl.max = formattedMax;
-      if (field.step !== undefined) {
-        maxEl.step = String(field.step);
-      }
-      maxEl.value = formattedMax;
-    }
+      var minInp = document.getElementById(sEl.id + "-min");
+      var maxInp = document.getElementById(sEl.id + "-max");
+      if (minInp) minInp.addEventListener("change", onInput);
+      if (maxInp) maxInp.addEventListener("change", onInput);
+    })(sliderEl);
   });
 }
 
@@ -1641,4 +1585,22 @@ function shuffleArray(array) {
     result[j] = temp;
   }
   return result;
+}
+
+export function dispose() {
+  var sliderIds = ["slider-interactions"];
+  metadataRangeFields.forEach(function (f) { sliderIds.push(f.sliderId); });
+  sliderIds.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el && el.noUiSlider) {
+      el.noUiSlider.destroy();
+    }
+    ["-min", "-max"].forEach(function (suffix) {
+      var inp = document.getElementById(id + suffix);
+      if (inp) {
+        var clone = inp.cloneNode(true);
+        inp.parentNode.replaceChild(clone, inp);
+      }
+    });
+  });
 }
