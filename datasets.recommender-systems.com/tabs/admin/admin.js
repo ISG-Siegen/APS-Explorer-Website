@@ -145,12 +145,12 @@ async function loadLogs() {
     var url = "./index.php?action=log&task=getUsageLogs&page=" + currentPage + "&pageSize=50";
     var response = await fetch(url);
     if (!response.ok) {
-      tbodyElement.innerHTML = '<tr><td colspan="6" class="text-danger">Failed to load logs</td></tr>';
+      tbodyElement.innerHTML = '<tr><td colspan="7" class="text-danger">Failed to load logs</td></tr>';
       return;
     }
     var data = await response.json();
     if (!data.isSuccess) {
-      tbodyElement.innerHTML = '<tr><td colspan="6" class="text-danger">' + (data.message || "Error") + '</td></tr>';
+      tbodyElement.innerHTML = '<tr><td colspan="7" class="text-danger">' + (data.message || "Error") + '</td></tr>';
       return;
     }
 
@@ -166,7 +166,7 @@ async function loadLogs() {
 
 function renderTable() {
   if (logs.length === 0) {
-    tbodyElement.innerHTML = '<tr><td colspan="6" class="text-muted text-center">No usage logs found.</td></tr>';
+    tbodyElement.innerHTML = '<tr><td colspan="7" class="text-muted text-center">No usage logs found.</td></tr>';
     return;
   }
 
@@ -178,12 +178,19 @@ function renderTable() {
     var filterDetails = formatFilterSummary(log.filters);
     var dateFormatted = formatDate(log.createdDate);
 
+    var configParts = [];
+    if (log.selectionMethod) configParts.push("Method: " + log.selectionMethod);
+    if (log.selectionMetric) configParts.push("Metric: " + log.selectionMetric);
+    if (log.selectionKValue) configParts.push("K: " + log.selectionKValue);
+    var configText = configParts.length > 0 ? configParts.join("\n") : "—";
+
     var recNamesLines = getDatasetNamesLines(log.recommendedDatasets);
 
     html += "<tr>"
       + "<td style='white-space: nowrap;'>" + dateFormatted + "</td>"
       + "<td style='max-width: 200px; overflow: hidden; text-overflow: ellipsis;' title='" + escapeHtml(seedNames) + "'>" + escapeHtml(seedNames) + "</td>"
       + "<td>" + filterCount + " dataset(s)</td>"
+      + "<td style='white-space: pre-line;'>" + escapeHtml(configText) + "</td>"
       + "<td style='max-width: 300px; white-space: pre-line;' title='" + escapeHtml(filterDetails) + "'>" + escapeHtml(filterDetails) + "</td>"
       + "<td>" + log.resultCount + "</td>"
       + "<td style='max-width: 200px; white-space: pre-line;' title='" + escapeHtml(recNamesLines) + "'>" + escapeHtml(recNamesLines) + "</td>"

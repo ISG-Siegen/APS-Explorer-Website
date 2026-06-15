@@ -1,5 +1,6 @@
 import { ApiService } from "../../apiService.js";
 import { copyToClipboard, getQueryString, versionNumber } from "../../main.js";
+import { selectDatasetSet } from "./datasetSetSelection.js";
 
 var datasets = [];
 
@@ -29,13 +30,23 @@ var generateButtonElement = null;
 var openApsButtonElement = null;
 var shareButtonElement = null;
 var statusElement = null;
+var loadingElement = null;
 var resultsSummaryElement = null;
 var resultsListElement = null;
+
+var methodSelectElement = null;
+var metricSelectElement = null;
+var kValueSelectElement = null;
 
 var interactionsBounds = {
   min: null,
   max: null,
 };
+
+var __allAlgorithms = null;
+var __performanceResults = null;
+
+var kValueKeyMap = { "1": "one", "3": "three", "5": "five", "10": "ten", "20": "twenty" };
 
 var activeFilters = {
   feedbackType: "all",
@@ -106,6 +117,14 @@ var metadataRangeBounds = {};
 export async function initialize(queryOptions) {
   datasets = await ApiService.getDatasets();
 
+  ApiService.getAlgorithms().then(function (a) {
+    __allAlgorithms = a;
+    var allIds = datasets.map(function (d) { return d.id; });
+    return ApiService.getPerformanceResults(allIds, a.map(function (ai) { return ai.id; }));
+  }).then(function (r) {
+    __performanceResults = r;
+  });
+
   mapElements();
 
   if (
@@ -151,8 +170,13 @@ function mapElements() {
   openApsButtonElement = document.getElementById("recommend-open-aps-btn");
   shareButtonElement = document.getElementById("recommend-share-btn");
   statusElement = document.getElementById("recommend-status");
+  loadingElement = document.getElementById("recommend-loading");
   resultsSummaryElement = document.getElementById("recommend-results-summary");
   resultsListElement = document.getElementById("recommend-results-list");
+
+  methodSelectElement = document.getElementById("recommend-method");
+  metricSelectElement = document.getElementById("recommend-metric");
+  kValueSelectElement = document.getElementById("recommend-kvalue");
 }
 
 function initializeSettingsFromQuery(queryOptions) {
@@ -259,6 +283,22 @@ function initializeSettingsFromQuery(queryOptions) {
           ? Number(queryOptions.maxInteractions)
           : interactionsBounds.max,
       ]);
+    }
+  }
+
+  if (queryOptions?.method && methodSelectElement) {
+    if (methodSelectElement.querySelector('option[value="' + queryOptions.method + '"]')) {
+      methodSelectElement.value = queryOptions.method;
+    }
+  }
+  if (queryOptions?.metric && metricSelectElement) {
+    if (metricSelectElement.querySelector('option[value="' + queryOptions.metric + '"]')) {
+      metricSelectElement.value = queryOptions.metric;
+    }
+  }
+  if (queryOptions?.kValue && kValueSelectElement) {
+    if (kValueSelectElement.querySelector('option[value="' + queryOptions.kValue + '"]')) {
+      kValueSelectElement.value = queryOptions.kValue;
     }
   }
 
@@ -1088,101 +1128,193 @@ function applyDatasetFilter() {
   }
 }
 
+function getSelectedMethod() {
+  if (methodSelectElement) return methodSelectElement.value;
+  return "non_diverse";
+}
+
+function buildApsVectors(datasetIds) {
+  if (!metricSelectElement || !kValueSelectElement) return null;
+  if (!__allAlgorithms || !__performanceResults) return null;
+  var metric = metricSelectElement.value;
+  var kValue = kValueSelectElement.value;
+  var perfKey = kValueKeyMap[kValue] || kValue;
+  var algorithmIds = __allAlgorithms.map(function (a) { return a.id; });
+  var vectors = [];
+  var validIds = [];
+  for (var di = 0; di < datasetIds.length; di++) {
+    var id = datasetIds[di];
+    var row = algorithmIds.map(function (aid) {
+      return __performanceResults[id]?.[aid]?.[metric]?.[perfKey] ?? NaN;
+    });
+    var hasSomeFinite = row.some(function (v) { return Number.isFinite(v); });
+    if (!hasSomeFinite) continue;
+    vectors.push(row);
+    validIds.push(id);
+  }
+  if (vectors.length < 2) return null;
+  var dims = algorithmIds.length;
+  for (var j = 0; j < dims; j++) {
+    var colVals = [];
+    for (var i = 0; i < vectors.length; i++) {
+      if (Number.isFinite(vectors[i][j])) colVals.push(vectors[i][j]);
+    }
+    var mean = colVals.length > 0
+      ? colVals.reduce(function (a, b) { return a + b; }, 0) / colVals.length
+      : 0;
+    for (var i = 0; i < vectors.length; i++) {
+      if (!Number.isFinite(vectors[i][j])) vectors[i][j] = mean;
+    }
+  }
+  for (var j = 0; j < dims; j++) {
+    var min = Infinity, max = -Infinity;
+    for (var i = 0; i < vectors.length; i++) {
+      if (vectors[i][j] < min) min = vectors[i][j];
+      if (vectors[i][j] > max) max = vectors[i][j];
+    }
+    var range = max - min;
+    if (range > 1e-12) {
+      for (var i = 0; i < vectors.length; i++) {
+        vectors[i][j] = (vectors[i][j] - min) / range;
+      }
+    } else {
+      for (var i = 0; i < vectors.length; i++) {
+        vectors[i][j] = 0;
+      }
+    }
+  }
+  return { vectors: vectors, datasetIds: validIds };
+}
+
 function generateRecommendation() {
-  readActiveFiltersFromUi();
+  if (loadingElement) loadingElement.style.display = "block";
+  if (statusElement) statusElement.style.display = "none";
+  if (generateButtonElement) generateButtonElement.disabled = true;
 
-  const requiredUnique = uniqueIds(requiredDatasetIds).filter((id) =>
-    datasets.some((d) => d.id === id),
-  );
-  requiredDatasetIds = requiredUnique;
+  setTimeout(function () {
+    readActiveFiltersFromUi();
+    var method = getSelectedMethod();
+    var metric = metricSelectElement ? metricSelectElement.value : "ndcg";
+    var kValue = kValueSelectElement ? kValueSelectElement.value : "10";
 
-  const targetCount = getValidatedTargetCount();
-  const poolWithoutRequired = shuffleArray(
-    getCandidatePool().filter(
-      (dataset) => !requiredUnique.includes(dataset.id),
-    ),
-  );
+    var requiredUnique = uniqueIds(requiredDatasetIds).filter(function (id) {
+      return datasets.some(function (d) { return d.id === id; });
+    });
+    requiredDatasetIds = requiredUnique;
 
-  console.log(getCandidatePool());
-  let effectiveTargetCount = targetCount;
-  let warningText = "";
+    var targetCount = getValidatedTargetCount();
+    var candidatePool = getCandidatePool();
+    var warningText = "";
 
-  if (targetCount < requiredUnique.length) {
-    effectiveTargetCount = requiredUnique.length;
-    targetCountElement.value = effectiveTargetCount;
-    warningText =
-      "Target count was smaller than seed datasets and was adjusted.";
-  }
-
-  const missingCount = Math.max(
-    0,
-    effectiveTargetCount - requiredUnique.length,
-  );
-  const selectedRecommendations = poolWithoutRequired
-    .slice(0, missingCount)
-    .map((dataset) => dataset.id)
-    .sort((a, b) => a - b);
-
-  recommendedDatasetIds = selectedRecommendations;
-  finalDatasetIds = [...requiredUnique, ...selectedRecommendations];
-
-  if (selectedRecommendations.length < missingCount) {
-    warningText =
-      "Not enough candidate datasets to reach your target count with current filters.";
-  }
-
-  renderResults();
-
-  var logRanges = {};
-  for (var key in activeFilters.metadataRanges) {
-    var range = activeFilters.metadataRanges[key];
-    var bounds = metadataRangeBounds[key];
-    if (bounds && range.min === bounds.min && range.max === bounds.max) {
-      continue;
+    if (targetCount < requiredUnique.length) {
+      targetCount = requiredUnique.length;
+      targetCountElement.value = targetCount;
+      warningText = "Target count was smaller than seed datasets and was adjusted.";
     }
-    logRanges[key] = range;
-  }
 
-  var logInteractions = "all";
-  if (activeFilters.minInteractions != null || activeFilters.maxInteractions != null) {
-    var atDefault = interactionsBounds.min != null && interactionsBounds.max != null
-      && activeFilters.minInteractions === interactionsBounds.min
-      && activeFilters.maxInteractions === interactionsBounds.max;
-    if (!atDefault) {
-      logInteractions = {
-        min: activeFilters.minInteractions,
-        max: activeFilters.maxInteractions,
-      };
+    var missingCount = Math.max(0, targetCount - requiredUnique.length);
+    var poolWithoutRequired = candidatePool.filter(function (d) {
+      return requiredUnique.indexOf(d.id) < 0;
+    });
+
+    var selectedRecommendations;
+    if (method === "random") {
+      poolWithoutRequired = shuffleArray(poolWithoutRequired);
+      selectedRecommendations = poolWithoutRequired
+        .slice(0, missingCount)
+        .map(function (d) { return d.id; })
+        .sort(function (a, b) { return a - b; });
+    } else {
+      var poolIds = poolWithoutRequired.map(function (d) { return d.id; });
+      var apsData = buildApsVectors(poolIds);
+      if (apsData && apsData.vectors.length >= 2 && apsData.vectors[0].length > 0) {
+        selectedRecommendations = selectDatasetSet(
+          apsData.vectors,
+          apsData.datasetIds,
+          missingCount,
+          method,
+        );
+        var usedMap = {};
+        for (var si = 0; si < selectedRecommendations.length; si++) {
+          usedMap[selectedRecommendations[si]] = true;
+        }
+        var remaining = poolIds.filter(function (id) { return !usedMap[id]; });
+        var shuffled = shuffleArray(remaining);
+        while (selectedRecommendations.length < missingCount && shuffled.length > 0) {
+          selectedRecommendations.push(shuffled.pop());
+        }
+        selectedRecommendations.sort(function (a, b) { return a - b; });
+      } else {
+        poolWithoutRequired = shuffleArray(poolWithoutRequired);
+        selectedRecommendations = poolWithoutRequired
+          .slice(0, missingCount)
+          .map(function (d) { return d.id; })
+          .sort(function (a, b) { return a - b; });
+      }
     }
-  }
 
-  var logPayload = {
-    seedDatasets: requiredUnique,
-    datasetFilter: selectedDatasets,
-    filters: {
-      feedbackType: activeFilters.feedbackType,
-      interactions: logInteractions,
-      metadataRanges: logRanges,
-      targetCount: targetCount,
-      candidatePoolSize: poolWithoutRequired.length,
-    },
-    resultCount: finalDatasetIds.length,
-    recommendedDatasets: finalDatasetIds,
-  };
-  fetch("./index.php?action=log&task=saveUsage", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(logPayload),
-  }).catch(function () {});
+    recommendedDatasetIds = selectedRecommendations;
+    finalDatasetIds = requiredUnique.concat(selectedRecommendations);
 
-  if (warningText) {
-    setStatus(warningText, "warning");
-  } else {
-    setStatus(
-      `Generated ${recommendedDatasetIds.length} recommendation(s). Final selection contains ${finalDatasetIds.length} dataset(s).`,
-      "success",
-    );
-  }
+    if (selectedRecommendations.length < missingCount) {
+      warningText = "Not enough candidate datasets to reach your target count with current filters.";
+    }
+
+    renderResults();
+
+    if (loadingElement) loadingElement.style.display = "none";
+    if (statusElement) statusElement.style.display = "";
+    if (generateButtonElement) generateButtonElement.disabled = false;
+
+    var logRanges = {};
+    for (var key in activeFilters.metadataRanges) {
+      var range = activeFilters.metadataRanges[key];
+      var bounds = metadataRangeBounds[key];
+      if (bounds && range.min === bounds.min && range.max === bounds.max) continue;
+      logRanges[key] = range;
+    }
+
+    var logInteractions = "all";
+    if (activeFilters.minInteractions != null || activeFilters.maxInteractions != null) {
+      var atDefault = interactionsBounds.min != null && interactionsBounds.max != null
+        && activeFilters.minInteractions === interactionsBounds.min
+        && activeFilters.maxInteractions === interactionsBounds.max;
+      if (!atDefault) {
+        logInteractions = { min: activeFilters.minInteractions, max: activeFilters.maxInteractions };
+      }
+    }
+
+    var logPayload = {
+      seedDatasets: requiredUnique,
+      datasetFilter: selectedDatasets,
+      selectionMethod: method,
+      selectionMetric: metric,
+      selectionKValue: kValue,
+      filters: {
+        feedbackType: activeFilters.feedbackType,
+        interactions: logInteractions,
+        metadataRanges: logRanges,
+        targetCount: targetCount,
+        candidatePoolSize: poolWithoutRequired.length,
+      },
+      resultCount: finalDatasetIds.length,
+      recommendedDatasets: finalDatasetIds,
+    };
+    fetch("./index.php?action=log&task=saveUsage", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(logPayload),
+    }).catch(function () {});
+
+    if (warningText) {
+      setStatus(warningText, "warning");
+    } else {
+      setStatus(
+        "Generated " + recommendedDatasetIds.length + " recommendation(s) using " + method + ". Final selection contains " + finalDatasetIds.length + " dataset(s).",
+        "success",
+      );
+    }
+  }, 30);
 }
 
 function renderResults() {
@@ -1292,6 +1424,11 @@ function shareRecommendState() {
   if (activeFilters.maxInteractions !== null) {
     queryData.maxInteractions = String(activeFilters.maxInteractions);
   }
+
+  var method = getSelectedMethod();
+  if (method !== "non_diverse") queryData.method = method;
+  if (metricSelectElement && metricSelectElement.value !== "ndcg") queryData.metric = metricSelectElement.value;
+  if (kValueSelectElement && kValueSelectElement.value !== "10") queryData.kValue = kValueSelectElement.value;
 
   const url = getQueryString(queryData);
   copyToClipboard(url, "recommend-share-btn");

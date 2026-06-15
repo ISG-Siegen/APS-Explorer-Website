@@ -124,6 +124,35 @@
           />
         </div>
         <div>
+          <label for="recommend-method" class="form-label">Selection Method</label>
+          <select id="recommend-method" class="form-select">
+            <option value="non_diverse" selected>Non-diverse</option>
+            <option value="diverse_convex_hull">Diverse Convex Hull</option>
+            <option value="diverse_effcov">Diverse EffCov</option>
+            <option value="random">Random</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="recommend-metric" class="form-label">APS Metric</label>
+          <select id="recommend-metric" class="form-select">
+            <option value="ndcg" selected>NDCG (NDCG@k)</option>
+            <option value="hr">HR</option>
+            <option value="recall">Recall</option>
+          </select>
+        </div>
+        <div>
+          <label for="recommend-kvalue" class="form-label">K-value</label>
+          <select id="recommend-kvalue" class="form-select">
+            <option value="1">1</option>
+            <option value="3">3</option>
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="20">20</option>
+          </select>
+        </div>
+
+        <div>
           <label for="recommend-feedback-type" class="form-label"
             >Feedback Type</label
           >
@@ -131,6 +160,7 @@
             <option value="all" selected>All</option>
           </select>
         </div>
+
         <div>
           <label class="form-label fw-semibold">Interactions</label>
           <div id="slider-interactions" class="range-slider"></div>
@@ -403,6 +433,13 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <div id="recommend-loading" class="text-center py-3" style="display: none;">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Generating recommendation...</span>
+    </div>
+    <div class="mt-1 text-muted small">Generating recommendation...</div>
   </div>
 
   <div id="recommend-status" class="alert alert-info" role="alert">

@@ -6,10 +6,18 @@ class UsageLog {
             CreatedDate DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6),
             SeedDatasets TEXT,
             DatasetFilter TEXT,
+            SelectionMethod VARCHAR(50),
+            SelectionMetric VARCHAR(50),
+            SelectionKValue INT,
             Filters TEXT,
             ResultCount INT,
             RecommendedDatasets TEXT
         )");
+        // add columns if missing (upgrade existing tables)
+        try { $pdo->exec("ALTER TABLE UsageLogs ADD COLUMN SelectionMethod VARCHAR(50) DEFAULT NULL"); } catch (Exception $e) {}
+        try { $pdo->exec("ALTER TABLE UsageLogs ADD COLUMN SelectionMetric VARCHAR(50) DEFAULT NULL"); } catch (Exception $e) {}
+        try { $pdo->exec("ALTER TABLE UsageLogs ADD COLUMN SelectionKValue INT DEFAULT NULL"); } catch (Exception $e) {}
+        try { $pdo->exec("ALTER TABLE UsageLogs MODIFY COLUMN SelectionKValue INT DEFAULT NULL"); } catch (Exception $e) {}
     }
 
     public static function saveUsageLog($pdo, $body) {
@@ -28,11 +36,14 @@ class UsageLog {
             exit();
         }
 
-        $stmt = $pdo->prepare("INSERT INTO UsageLogs (CreatedDate, SeedDatasets, DatasetFilter, Filters, ResultCount, RecommendedDatasets)
-            VALUES (NOW(6), :seedDatasets, :datasetFilter, :filters, :resultCount, :recommendedDatasets)");
+        $stmt = $pdo->prepare("INSERT INTO UsageLogs (CreatedDate, SeedDatasets, DatasetFilter, SelectionMethod, SelectionMetric, SelectionKValue, Filters, ResultCount, RecommendedDatasets)
+            VALUES (NOW(6), :seedDatasets, :datasetFilter, :selectionMethod, :selectionMetric, :selectionKValue, :filters, :resultCount, :recommendedDatasets)");
         $stmt->execute([
             ':seedDatasets' => json_encode($body['seedDatasets']),
             ':datasetFilter' => json_encode($body['datasetFilter']),
+            ':selectionMethod' => $body['selectionMethod'] ?? null,
+            ':selectionMetric' => $body['selectionMetric'] ?? null,
+            ':selectionKValue' => isset($body['selectionKValue']) ? (int)$body['selectionKValue'] : null,
             ':filters' => json_encode($body['filters']),
             ':resultCount' => $body['resultCount'],
             ':recommendedDatasets' => json_encode($body['recommendedDatasets']),
@@ -84,6 +95,9 @@ class UsageLog {
                 'createdDate' => $row->CreatedDate,
                 'seedDatasets' => json_decode($row->SeedDatasets, true) ?? [],
                 'datasetFilter' => json_decode($row->DatasetFilter, true) ?? [],
+                'selectionMethod' => $row->SelectionMethod ?? null,
+                'selectionMetric' => $row->SelectionMetric ?? null,
+                'selectionKValue' => $row->SelectionKValue !== null ? (int)$row->SelectionKValue : null,
                 'filters' => json_decode($row->Filters, true) ?? [],
                 'resultCount' => (int)$row->ResultCount,
                 'recommendedDatasets' => json_decode($row->RecommendedDatasets, true) ?? [],
