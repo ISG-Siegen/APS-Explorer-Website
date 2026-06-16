@@ -14,13 +14,38 @@ $pdo = Database::getConnection();
 if ($pdo === null) {
     header('Content-Type: application/json');
     http_response_code(500);
-    echo json_encode([
+    $response = [
         "isSuccess" => false,
         "statusCode" => 500,
         "message" => "Connection to the DB failed"
-    ]);
+    ];
+
+    $databaseError = Database::getLastError();
+    if ($databaseError !== null) {
+        $response["error"] = $databaseError;
+    }
+
+    echo json_encode($response);
     exit();
 }
+
+set_exception_handler(function ($exception) {
+    error_log('Unhandled API error: ' . $exception->getMessage());
+
+    header('Content-Type: application/json');
+    http_response_code(500);
+    $response = [
+        "isSuccess" => false,
+        "statusCode" => 500,
+        "message" => "The API request failed"
+    ];
+
+    if (Database::isDebugEnabled()) {
+        $response["error"] = $exception->getMessage();
+    }
+
+    echo json_encode($response);
+});
 
 $action = isset($_REQUEST['action']) ? $_REQUEST['action'] : null;
 if ($action === null) {

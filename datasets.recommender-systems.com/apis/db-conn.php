@@ -1,6 +1,16 @@
 <?php
 class Database {
     private static $pdo = null;
+    private static $lastError = null;
+    private static $debug = false;
+
+    public static function getLastError() {
+        return self::$debug ? self::$lastError : null;
+    }
+
+    public static function isDebugEnabled() {
+        return self::$debug;
+    }
 
     public static function checkConnection() {
         if (self::$pdo === null) {
@@ -16,7 +26,8 @@ class Database {
 
     public static function getConnection() {
         if (self::$pdo === null) {
-            $config = include('../configs/db_config.php');
+            $config = include(__DIR__ . '/../../configs/db_config.php');
+            self::$debug = !empty($config['debug']);
             $host = $config['host'];
             $port = $config['port'];
             $dbname = $config['dbname'];
@@ -32,6 +43,8 @@ class Database {
 
                 self::$pdo = new PDO($dsn, $username, $password, $options);
             } catch (PDOException $e) {
+                self::$lastError = $e->getMessage();
+                error_log('Database connection failed: ' . self::$lastError);
                 return null;
             }
         }
