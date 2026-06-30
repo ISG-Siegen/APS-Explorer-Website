@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <title>APS Explorer Admin</title>
+    <link rel="icon" href="../assets/img/favicon.ico" />
+    <link href="../assets/css/fontawesome.css" rel="stylesheet" />
+    <link href="../assets/css/solid.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="./admin.css?v=1" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="./admin.js?v=1" defer></script>
+  </head>
+  <body>
+    <header class="admin-header">
+      <div class="container-fluid admin-container d-flex flex-wrap align-items-center gap-3">
+        <a href="../index.html" class="brand text-decoration-none">
+          <img src="../assets/img/logo.png" alt="" width="34" height="34" />
+          <span>
+            <strong>APS Explorer</strong>
+            <small>Administration</small>
+          </span>
+        </a>
+        <div class="ms-auto d-flex align-items-center gap-2">
+          <span class="secure-badge"><i class="fa-solid fa-lock"></i> Protected</span>
+          <a class="btn btn-sm btn-outline-light" href="../index.html">
+            <i class="fa-solid fa-arrow-left"></i> Public site
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main class="container-fluid admin-container py-4">
+      <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
+        <div>
+          <p class="eyebrow mb-1">Usage analytics</p>
+          <h1 class="h2 mb-1">Admin dashboard</h1>
+          <p class="text-secondary mb-0">Understand how dataset recommendations are being used.</p>
+        </div>
+        <div class="d-flex gap-2">
+          <span id="last-updated" class="last-updated align-self-center"></span>
+          <button id="refresh-button" class="btn btn-primary">
+            <i class="fa-solid fa-rotate"></i> Refresh
+          </button>
+        </div>
+      </div>
+
+      <ul class="nav admin-tabs mb-4" id="admin-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard-panel" type="button" role="tab" aria-controls="dashboard-panel" aria-selected="true">
+            <i class="fa-solid fa-chart-line"></i> Dashboard
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="logs-tab" data-bs-toggle="tab" data-bs-target="#logs-panel" type="button" role="tab" aria-controls="logs-panel" aria-selected="false">
+            <i class="fa-solid fa-table-list"></i> Usage logs
+            <span id="log-count-badge" class="badge rounded-pill text-bg-secondary ms-1">0</span>
+          </button>
+        </li>
+      </ul>
+
+      <div id="global-alert" class="alert alert-danger d-none" role="alert"></div>
+      <div id="loading-state" class="loading-state d-none" aria-live="polite">
+        <div class="spinner-border text-primary" role="status"></div>
+        <span>Loading analytics…</span>
+      </div>
+
+      <div class="tab-content">
+        <section class="tab-pane fade show active" id="dashboard-panel" role="tabpanel" aria-labelledby="dashboard-tab" tabindex="0">
+          <div id="kpi-grid" class="kpi-grid mb-4"></div>
+
+          <div class="dashboard-grid mb-4">
+            <article class="panel panel-wide">
+              <div class="panel-heading">
+                <div><h2>Usage over time</h2><p>Requests during the last 30 days</p></div>
+              </div>
+              <div class="chart-wrap chart-wide"><canvas id="activity-chart"></canvas></div>
+            </article>
+            <article class="panel">
+              <div class="panel-heading"><div><h2>Selection methods</h2><p>Share of logged requests</p></div></div>
+              <div class="chart-wrap"><canvas id="methods-chart"></canvas></div>
+            </article>
+            <article class="panel">
+              <div class="panel-heading"><div><h2>Selection metrics</h2><p>Most frequently selected metrics</p></div></div>
+              <div class="chart-wrap"><canvas id="metrics-chart"></canvas></div>
+            </article>
+            <article class="panel">
+              <div class="panel-heading"><div><h2>Activity by hour</h2><p>Time-of-day usage pattern</p></div></div>
+              <div class="chart-wrap"><canvas id="hourly-chart"></canvas></div>
+            </article>
+            <article class="panel">
+              <div class="panel-heading"><div><h2>Activity by weekday</h2><p>Weekly usage pattern</p></div></div>
+              <div class="chart-wrap"><canvas id="weekday-chart"></canvas></div>
+            </article>
+            <article class="panel">
+              <div class="panel-heading"><div><h2>Result distribution</h2><p>Recommendations returned per request</p></div></div>
+              <div class="chart-wrap"><canvas id="results-chart"></canvas></div>
+            </article>
+            <article class="panel">
+              <div class="panel-heading"><div><h2>K values</h2><p>Nearest-neighbour configuration</p></div></div>
+              <div class="chart-wrap"><canvas id="k-values-chart"></canvas></div>
+            </article>
+          </div>
+
+          <div class="ranking-grid mb-4">
+            <article class="panel"><div class="panel-heading"><div><h2>Top seed datasets</h2><p>Most frequently chosen starting points</p></div></div><div id="top-seeds" class="ranking-list"></div></article>
+            <article class="panel"><div class="panel-heading"><div><h2>Top candidate datasets</h2><p>Most frequently included in the candidate pool</p></div></div><div id="top-filtered" class="ranking-list"></div></article>
+            <article class="panel"><div class="panel-heading"><div><h2>Top recommendations</h2><p>Most frequently recommended datasets</p></div></div><div id="top-recommended" class="ranking-list"></div></article>
+          </div>
+
+          <div class="dashboard-grid">
+            <article class="panel">
+              <div class="panel-heading"><div><h2>Filter usage</h2><p>Which controls influence recommendations</p></div></div>
+              <div id="filter-usage" class="ranking-list"></div>
+            </article>
+            <article class="panel">
+              <div class="panel-heading"><div><h2>Feedback types</h2><p>Active feedback constraints</p></div></div>
+              <div id="feedback-types" class="ranking-list"></div>
+            </article>
+            <article class="panel summary-panel">
+              <div class="panel-heading"><div><h2>Result summary</h2><p>Distribution and request composition</p></div></div>
+              <dl id="result-summary" class="summary-list"></dl>
+            </article>
+          </div>
+        </section>
+
+        <section class="tab-pane fade" id="logs-panel" role="tabpanel" aria-labelledby="logs-tab" tabindex="0">
+          <article class="panel mb-3">
+            <form id="log-filters" class="filter-grid">
+              <label class="form-label filter-search">Search<input id="search-filter" class="form-control" type="search" placeholder="Dataset ID, method, metric or filter…" /></label>
+              <label class="form-label">From<input id="from-filter" class="form-control" type="date" /></label>
+              <label class="form-label">To<input id="to-filter" class="form-control" type="date" /></label>
+              <label class="form-label">Method<select id="method-filter" class="form-select"><option value="">All methods</option></select></label>
+              <label class="form-label">Metric<select id="metric-filter" class="form-select"><option value="">All metrics</option></select></label>
+              <label class="form-label">Sort<select id="sort-filter" class="form-select"><option value="date:desc">Newest first</option><option value="date:asc">Oldest first</option><option value="results:desc">Most results</option><option value="results:asc">Fewest results</option></select></label>
+              <div class="filter-actions">
+                <button class="btn btn-primary" type="submit"><i class="fa-solid fa-filter"></i> Apply</button>
+                <button id="reset-filters" class="btn btn-outline-secondary" type="button">Reset</button>
+              </div>
+            </form>
+          </article>
+
+          <article class="panel logs-panel">
+            <div class="panel-heading logs-heading">
+              <div><h2>Usage log entries</h2><p id="logs-result-label">No entries loaded</p></div>
+              <button id="delete-all-button" class="btn btn-outline-danger btn-sm" type="button"><i class="fa-solid fa-trash"></i> Delete all logs</button>
+            </div>
+            <div class="table-responsive">
+              <table class="table admin-table align-middle mb-0">
+                <thead><tr><th>Date</th><th>Configuration</th><th>Seeds</th><th>Candidates</th><th>Results</th><th>Recommendations</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
+                <tbody id="logs-body"></tbody>
+              </table>
+            </div>
+            <div class="pagination-bar">
+              <label>Rows<select id="page-size" class="form-select form-select-sm"><option>10</option><option selected>25</option><option>50</option><option>100</option></select></label>
+              <span id="page-label">Page 1 of 1</span>
+              <div class="btn-group btn-group-sm"><button id="previous-page" class="btn btn-outline-secondary" type="button">Previous</button><button id="next-page" class="btn btn-outline-secondary" type="button">Next</button></div>
+            </div>
+          </article>
+        </section>
+      </div>
+    </main>
+
+    <div class="modal fade" id="log-detail-modal" tabindex="-1" aria-labelledby="log-detail-title" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content">
+        <div class="modal-header"><div><p class="eyebrow mb-1">Usage log</p><h2 class="modal-title fs-5" id="log-detail-title">Log details</h2></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+        <div id="log-detail-body" class="modal-body"></div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div>
+      </div></div>
+    </div>
+  </body>
+</html>

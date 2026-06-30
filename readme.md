@@ -63,6 +63,16 @@ APS Explorer is a web application for exploring and selecting datasets based on 
 - **API Endpoints:**
 	- Located in `datasets.recommender-systems.com/apis/`.
 
+## Protected Admin Interface
+
+The analytics dashboard and usage-log management are available under `/admin/`. The complete
+directory is protected with Apache HTTP Basic Authentication. Setup instructions, including the
+required absolute `AuthUserFile` path and creation of the non-versioned password file, are in
+`datasets.recommender-systems.com/admin/README.md`.
+
+Use the admin area over HTTPS only. Public API access can save usage events, but reading statistics
+or deleting logs is only available through the protected admin API.
+
 ## Adapting or Extending
 
 - **Frontend:**

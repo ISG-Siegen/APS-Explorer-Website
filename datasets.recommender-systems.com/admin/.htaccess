@@ -1,0 +1,14 @@
+Options -Indexes
+
+AuthType Basic
+AuthName "APS Explorer Administration"
+AuthBasicProvider file
+AuthUserFile "/www/htdocs/w0216ee9/configs/admin.htpasswd"
+Require user admin
+
+<IfModule mod_headers.c>
+    Header always set X-Robots-Tag "noindex, nofollow, noarchive"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "no-referrer"
+    Header always set Content-Security-Policy "frame-ancestors 'none'"
+</IfModule>

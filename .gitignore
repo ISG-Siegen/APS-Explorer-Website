@@ -5,4 +5,5 @@ favicon.xcf
 package-lock.json
 package.json
 /node_modules/
+configs/admin.htpasswd
 _scripts/datasets-rec-sys-auto-add/body.json

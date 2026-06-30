@@ -169,12 +169,6 @@ else if ($action === 'log') {
         $body = json_decode($strBody, true);
         UsageLog::saveUsageLog($pdo, $body);
     }
-    else if ($task === 'getUsageLogs') {
-        UsageLog::getUsageLogs($pdo);
-    }
-    else if ($task === 'deleteAllUsageLogs') {
-        UsageLog::deleteAllUsageLogs($pdo);
-    }
     else {
         header('Content-Type: application/json');
         http_response_code(400);

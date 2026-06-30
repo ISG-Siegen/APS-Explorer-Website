@@ -18,7 +18,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const recommendDatasetsBtn = document.getElementById(
     "recommend-datasets-btn",
   );
-  const adminTabBtn = document.getElementById("admin-tab-btn");
 
   apsTabBtn.addEventListener("click", async (e) => {
     await loadTab("./tabs/aps/aps.html");
@@ -32,9 +31,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   recommendDatasetsBtn.addEventListener("click", async (e) => {
     await loadTab("./tabs/recommendDatasets/recommendDatasets.html");
   });
-  adminTabBtn.addEventListener("click", async (e) => {
-    await loadTab("./tabs/admin/admin.html");
-  });
   const queryOptions = readQueryString(window.location.search);
 
   if (queryOptions.tab) {
@@ -47,8 +43,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       compareDatasetsBtn.click();
     } else if (tabName === "aps") {
       apsTabBtn.click();
-    } else if (tabName === "admin") {
-      adminTabBtn.click();
     }
   } else {
     recommendDatasetsBtn.click();
