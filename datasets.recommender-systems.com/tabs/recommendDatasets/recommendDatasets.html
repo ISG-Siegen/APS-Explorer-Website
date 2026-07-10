@@ -1,512 +1,286 @@
 <div
-  class="tab-pane fade show active"
+  class="tab-pane fade show active recommend-page"
   id="dataset-info-tab-pane"
   role="tabpanel"
   aria-labelledby="dataset-info-tab"
   tabindex="0"
 >
-  <h2>Dataset Recommendation</h2>
-  <p>
-    Select optional mandatory datasets, set your desired total number, and
-    optional basic filters. The system will randomly fill in the missing
-    datasets and you can display the final selection directly in the APS.
-  </p>
+  <section class="recommend-hero">
+    <div class="recommend-hero-copy">
+      <span class="recommend-eyebrow">Guided dataset selection</span>
+      <h2>Dataset Recommendation</h2>
+      <p>
+        Build a purposeful dataset collection by combining optional seeds,
+        candidate filters, and APS-based selection strategies.
+      </p>
+    </div>
+    <div class="recommend-hero-steps" aria-label="Recommendation workflow">
+      <span><strong>1</strong> Select</span>
+      <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+      <span><strong>2</strong> Configure</span>
+      <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+      <span><strong>3</strong> Generate</span>
+    </div>
+  </section>
 
-  <div
-    class="accordion"
-    id="accordionRequiredDatasets"
-    style="margin-bottom: 1rem"
-  >
-    <div class="accordion-item">
-      <h2 class="accordion-header" id="headingRequiredDatasets">
-        <button
-          class="accordion-button collapsed acc-btn-icon"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#collapseRequiredDatasets"
-          aria-expanded="false"
-          aria-controls="collapseRequiredDatasets"
-        >
-          <span>Seed Datasets</span>
-          <span id="required-dataset-header" style="margin-left: auto"
-            >(None selected)</span
-          >
-        </button>
-      </h2>
-      <div
-        id="collapseRequiredDatasets"
-        class="accordion-collapse collapse"
-        aria-labelledby="headingRequiredDatasets"
-        data-bs-parent="#accordionRequiredDatasets"
-      >
-        <div id="required-dataset-filter" class="accordion-body">
-          <div class="required-dataset-autocomplete">
-            <div
-              id="required-dataset-chips"
-              class="required-dataset-chips"
-            ></div>
-            <input
-              id="required-dataset-input"
-              class="form-control required-dataset-input"
-              type="text"
-              placeholder="Type to add seed datasets"
-              autocomplete="off"
-            />
-          </div>
+  <section class="recommend-section" aria-labelledby="selection-heading">
+    <div class="recommend-section-heading">
+      <span class="recommend-step-icon"><i class="fa-solid fa-database"></i></span>
+      <div>
+        <span class="recommend-section-kicker">Step 1</span>
+        <h3 id="selection-heading">Choose the dataset pool</h3>
+        <p>Add fixed seed datasets and decide which datasets may be considered.</p>
+      </div>
+    </div>
+
+    <div class="recommend-selection-grid">
+      <div class="accordion recommend-accordion" id="accordionRequiredDatasets">
+        <div class="accordion-item">
+          <h4 class="accordion-header" id="headingRequiredDatasets">
+            <button
+              class="accordion-button collapsed"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#collapseRequiredDatasets"
+              aria-expanded="false"
+              aria-controls="collapseRequiredDatasets"
+            >
+              <span class="recommend-accordion-icon"><i class="fa-solid fa-thumbtack"></i></span>
+              <span class="recommend-accordion-copy">
+                <strong>Seed Datasets</strong>
+                <small>Always include these datasets</small>
+              </span>
+              <span id="required-dataset-header" class="recommend-count-badge">None selected</span>
+            </button>
+          </h4>
           <div
-            id="required-dataset-suggestions"
-            class="required-dataset-suggestions"
-          ></div>
+            id="collapseRequiredDatasets"
+            class="accordion-collapse collapse"
+            aria-labelledby="headingRequiredDatasets"
+          >
+            <div id="required-dataset-filter" class="accordion-body">
+              <label class="recommend-field-label" for="required-dataset-input">Find seed datasets</label>
+              <div class="required-dataset-autocomplete">
+                <i class="fa-solid fa-magnifying-glass recommend-input-icon" aria-hidden="true"></i>
+                <div id="required-dataset-chips" class="required-dataset-chips"></div>
+                <input
+                  id="required-dataset-input"
+                  class="form-control required-dataset-input"
+                  type="text"
+                  placeholder="Type a dataset name…"
+                  autocomplete="off"
+                />
+              </div>
+              <div id="required-dataset-suggestions" class="required-dataset-suggestions"></div>
+              <p class="recommend-field-help">Seeds are preserved in every generated selection.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion recommend-accordion" id="accordionDatasetInformation">
+        <div class="accordion-item">
+          <h4 class="accordion-header" id="headingOne">
+            <button
+              class="accordion-button collapsed"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#collapseOne"
+              aria-expanded="false"
+              aria-controls="collapseOne"
+            >
+              <span class="recommend-accordion-icon recommend-accordion-icon-secondary"><i class="fa-solid fa-layer-group"></i></span>
+              <span class="recommend-accordion-copy">
+                <strong>Candidate Datasets</strong>
+                <small>Control the available dataset pool</small>
+              </span>
+              <span id="dataset-comparison-header" class="recommend-count-badge">All selected</span>
+            </button>
+          </h4>
+          <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne">
+            <div id="dataset-comparison-filter" class="accordion-body recommend-candidate-grid">
+              <!-- Dataset filter checkboxes -->
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <div
-    class="accordion"
-    id="accordionDatasetInformation"
-    style="margin-bottom: 1rem"
-  >
-    <div class="accordion-item">
-      <h2 class="accordion-header" id="headingOne">
-        <button
-          class="accordion-button collapsed acc-btn-icon"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#collapseOne"
-          aria-expanded="false"
-          aria-controls="collapseOne"
-        >
-          <span>Dataset Filter</span>
-          <span id="dataset-comparison-header" style="margin-left: auto"
-            >(All selected)</span
-          >
-        </button>
-      </h2>
-      <div
-        id="collapseOne"
-        class="accordion-collapse collapse"
-        aria-labelledby="headingOne"
-        data-bs-parent="#accordionDatasetInformation"
-      >
-        <div
-          id="dataset-comparison-filter"
-          class="accordion-body"
-          style="display: flex; flex-wrap: wrap; gap: 12px"
-        >
-          <!-- Dataset filter checkboxes -->
-        </div>
+  <section class="recommend-section recommend-settings" aria-labelledby="settings-heading">
+    <div class="recommend-section-heading">
+      <span class="recommend-step-icon recommend-step-icon-purple"><i class="fa-solid fa-sliders"></i></span>
+      <div>
+        <span class="recommend-section-kicker">Step 2</span>
+        <h3 id="settings-heading">Configure the recommendation</h3>
+        <p>Choose the selection strategy and narrow the pool with optional filters.</p>
       </div>
     </div>
-  </div>
 
-  <div class="card" style="margin-bottom: 1rem">
-    <div class="card-body">
-      <h5 class="card-title">Recommendation Settings</h5>
-      <div
-        style="
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 20px 50px;
-        "
-      >
-        <div>
-          <label for="recommend-target-count" class="form-label"
-            >Total dataset count</label
-          >
-          <input
-            id="recommend-target-count"
-            class="form-control"
-            type="number"
-            min="1"
-            step="1"
-            value="5"
-          />
-        </div>
-        <div>
-          <label for="recommend-method" class="form-label">Selection Method</label>
-          <select id="recommend-method" class="form-select">
-            <option value="non_diverse" selected>Non-diverse</option>
-            <option value="diverse_convex_hull">Diverse Convex Hull</option>
-            <option value="diverse_effcov">Diverse EffCov</option>
-            <option value="random">Random</option>
-          </select>
-        </div>
+    <div class="recommend-primary-settings">
+      <label class="recommend-setting-card recommend-target-card" for="recommend-target-count">
+        <span class="recommend-setting-icon"><i class="fa-solid fa-bullseye"></i></span>
+        <span class="recommend-setting-copy"><strong>Total dataset count</strong><small>Size of the final selection</small></span>
+        <input id="recommend-target-count" class="form-control" type="number" min="1" step="1" value="5" />
+      </label>
 
-        <div>
-          <label for="recommend-metric" class="form-label">APS Metric</label>
-          <select id="recommend-metric" class="form-select">
-            <option value="ndcg" selected>NDCG (NDCG@k)</option>
-            <option value="hr">HR</option>
-            <option value="recall">Recall</option>
-          </select>
-        </div>
-        <div>
-          <label for="recommend-kvalue" class="form-label">K-value</label>
-          <select id="recommend-kvalue" class="form-select">
-            <option value="1">1</option>
-            <option value="3">3</option>
-            <option value="5">5</option>
-            <option value="10" selected>10</option>
-            <option value="20">20</option>
-          </select>
-        </div>
+      <label class="recommend-setting-card" for="recommend-method">
+        <span class="recommend-setting-icon"><i class="fa-solid fa-shuffle"></i></span>
+        <span class="recommend-setting-copy"><strong>Selection method</strong><small>How datasets are chosen</small></span>
+        <select id="recommend-method" class="form-select">
+          <option value="non_diverse" selected>Non-diverse</option>
+          <option value="diverse_convex_hull">Diverse Convex Hull</option>
+          <option value="diverse_effcov">Diverse EffCov</option>
+          <option value="random">Random</option>
+        </select>
+      </label>
 
-        <div>
-          <label for="recommend-feedback-type" class="form-label"
-            >Feedback Type</label
-          >
-          <select id="recommend-feedback-type" class="form-select">
-            <option value="all" selected>All</option>
-          </select>
-        </div>
+      <label class="recommend-setting-card" for="recommend-metric">
+        <span class="recommend-setting-icon"><i class="fa-solid fa-chart-simple"></i></span>
+        <span class="recommend-setting-copy"><strong>APS metric</strong><small>Performance signal to compare</small></span>
+        <select id="recommend-metric" class="form-select">
+          <option value="ndcg" selected>NDCG (NDCG@k)</option>
+          <option value="hr">HR</option>
+          <option value="recall">Recall</option>
+        </select>
+      </label>
 
-        <div>
-          <label class="form-label fw-semibold">Interactions</label>
-          <div id="slider-interactions" class="range-slider"></div>
-          <div class="d-flex justify-content-between gap-2 range-input-row">
-            <input
-              id="slider-interactions-min"
-              class="form-control form-control-sm range-input"
-              type="number"
-              value="0"
-            />
-            <input
-              id="slider-interactions-max"
-              class="form-control form-control-sm range-input"
-              type="number"
-              value="0"
-            />
-          </div>
-        </div>
-        <div>
-          <label class="form-label fw-semibold">Users</label>
-          <div id="slider-users" class="range-slider"></div>
-          <div class="d-flex justify-content-between gap-2 range-input-row">
-            <input
-              id="slider-users-min"
-              class="form-control form-control-sm range-input"
-              type="number"
-              value="0"
-            />
-            <input
-              id="slider-users-max"
-              class="form-control form-control-sm range-input"
-              type="number"
-              value="0"
-            />
-          </div>
-        </div>
-        <div>
-          <label class="form-label fw-semibold">Items</label>
-          <div id="slider-items" class="range-slider"></div>
-          <div class="d-flex justify-content-between gap-2 range-input-row">
-            <input
-              id="slider-items-min"
-              class="form-control form-control-sm range-input"
-              type="number"
-              value="0"
-            />
-            <input
-              id="slider-items-max"
-              class="form-control form-control-sm range-input"
-              type="number"
-              value="0"
-            />
-          </div>
-        </div>
-        <div>
-          <label class="form-label fw-semibold">User-Item Ratio</label>
-          <div id="slider-ratio" class="range-slider"></div>
-          <div class="d-flex justify-content-between gap-2 range-input-row">
-            <input
-              id="slider-ratio-min"
-              class="form-control form-control-sm range-input"
-              type="number"
-              step="0.1"
-              value="0"
-            />
-            <input
-              id="slider-ratio-max"
-              class="form-control form-control-sm range-input"
-              type="number"
-              step="0.1"
-              value="0"
-            />
-          </div>
-        </div>
-        <div>
-          <label class="form-label fw-semibold">Density</label>
-          <div id="slider-density" class="range-slider"></div>
-          <div class="d-flex justify-content-between gap-2 range-input-row">
-            <input
-              id="slider-density-min"
-              class="form-control form-control-sm range-input"
-              type="number"
-              step="0.001"
-              value="0"
-            />
-            <input
-              id="slider-density-max"
-              class="form-control form-control-sm range-input"
-              type="number"
-              step="0.001"
-              value="0"
-            />
-          </div>
-        </div>
-        <div>
-          <label class="form-label fw-semibold">Max Rating/User</label>
-          <div id="slider-max-user" class="range-slider"></div>
-          <div class="d-flex justify-content-between gap-2 range-input-row">
-            <input
-              id="slider-max-user-min"
-              class="form-control form-control-sm range-input"
-              type="number"
-              value="0"
-            />
-            <input
-              id="slider-max-user-max"
-              class="form-control form-control-sm range-input"
-              type="number"
-              value="0"
-            />
-          </div>
-        </div>
-        <div>
-          <label class="form-label fw-semibold">Min Rating/User</label>
-          <div id="slider-min-user" class="range-slider"></div>
-          <div class="d-flex justify-content-between gap-2 range-input-row">
-            <input
-              id="slider-min-user-min"
-              class="form-control form-control-sm range-input"
-              type="number"
-              value="0"
-            />
-            <input
-              id="slider-min-user-max"
-              class="form-control form-control-sm range-input"
-              type="number"
-              value="0"
-            />
-          </div>
-        </div>
-        <div>
-          <label class="form-label fw-semibold">Max Rating/Item</label>
-          <div id="slider-max-item" class="range-slider"></div>
-          <div class="d-flex justify-content-between gap-2 range-input-row">
-            <input
-              id="slider-max-item-min"
-              class="form-control form-control-sm range-input"
-              type="number"
-              value="0"
-            />
-            <input
-              id="slider-max-item-max"
-              class="form-control form-control-sm range-input"
-              type="number"
-              value="0"
-            />
-          </div>
-        </div>
-        <div>
-          <label class="form-label fw-semibold">Min Rating/Item</label>
-          <div id="slider-min-item" class="range-slider"></div>
-          <div class="d-flex justify-content-between gap-2 range-input-row">
-            <input
-              id="slider-min-item-min"
-              class="form-control form-control-sm range-input"
-              type="number"
-              value="0"
-            />
-            <input
-              id="slider-min-item-max"
-              class="form-control form-control-sm range-input"
-              type="number"
-              value="0"
-            />
-          </div>
-        </div>
-        <div>
-          <label class="form-label fw-semibold">Mean Ratings/User</label>
-          <div id="slider-mean-user" class="range-slider"></div>
-          <div class="d-flex justify-content-between gap-2 range-input-row">
-            <input
-              id="slider-mean-user-min"
-              class="form-control form-control-sm range-input"
-              type="number"
-              step="0.1"
-              value="0"
-            />
-            <input
-              id="slider-mean-user-max"
-              class="form-control form-control-sm range-input"
-              type="number"
-              step="0.1"
-              value="0"
-            />
-          </div>
-        </div>
-        <div>
-          <label class="form-label fw-semibold">Mean Ratings/Item</label>
-          <div id="slider-mean-item" class="range-slider"></div>
-          <div class="d-flex justify-content-between gap-2 range-input-row">
-            <input
-              id="slider-mean-item-min"
-              class="form-control form-control-sm range-input"
-              type="number"
-              step="0.1"
-              value="0"
-            />
-            <input
-              id="slider-mean-item-max"
-              class="form-control form-control-sm range-input"
-              type="number"
-              step="0.1"
-              value="0"
-            />
-          </div>
-        </div>
-      </div>
+      <label class="recommend-setting-card" for="recommend-kvalue">
+        <span class="recommend-setting-icon"><i class="fa-solid fa-k"></i></span>
+        <span class="recommend-setting-copy"><strong>K-value</strong><small>Cut-off used by the metric</small></span>
+        <select id="recommend-kvalue" class="form-select">
+          <option value="1">1</option>
+          <option value="3">3</option>
+          <option value="5">5</option>
+          <option value="10" selected>10</option>
+          <option value="20">20</option>
+        </select>
+      </label>
 
-      <div
-        style="margin-top: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap"
-      >
-        <button
-          id="recommend-generate-btn"
-          type="button"
-          class="btn btn-primary"
-        >
-          <i class="fa-solid fa-wand-magic-sparkles"></i> Generate
-          Recommendation
-        </button>
-        <button
-          id="recommend-open-aps-btn"
-          type="button"
-          class="btn btn-outline-primary"
-          disabled
-        >
-          <i class="fa-solid fa-chart-line"></i> Open In APS
-        </button>
-        <button
-          id="recommend-share-btn"
-          type="button"
-          class="btn btn-outline-secondary"
-        >
-          <i class="fa-solid fa-link"></i> Share
-        </button>
-        <div class="btn-group" style="margin-left: 0.5rem">
-          <button
-            id="recommend-export-btn"
-            type="button"
-            class="btn btn-outline-success dropdown-toggle"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-          >
-            <i class="fa-solid fa-file-export"></i> Export
+      <label class="recommend-setting-card" for="recommend-feedback-type">
+        <span class="recommend-setting-icon"><i class="fa-solid fa-message"></i></span>
+        <span class="recommend-setting-copy"><strong>Feedback type</strong><small>Restrict the interaction signal</small></span>
+        <select id="recommend-feedback-type" class="form-select"><option value="all" selected>All</option></select>
+      </label>
+    </div>
+
+    <div class="accordion recommend-advanced" id="recommendAdvancedFilters">
+      <div class="accordion-item">
+        <h4 class="accordion-header" id="recommendAdvancedHeading">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#recommendAdvancedCollapse" aria-expanded="false" aria-controls="recommendAdvancedCollapse">
+            <span class="recommend-accordion-icon recommend-accordion-icon-filter"><i class="fa-solid fa-filter"></i></span>
+            <span class="recommend-accordion-copy"><strong>Advanced range filters</strong><small>Fine-tune candidates using dataset characteristics</small></span>
+            <span class="recommend-optional-badge">Optional</span>
           </button>
-          <ul class="dropdown-menu" aria-labelledby="recommend-export-btn">
-            <li>
-              <a class="dropdown-item" href="#" id="export-image"
-                >Export Image</a
-              >
-            </li>
-            <li>
-              <a class="dropdown-item" href="#" id="export-markdown"
-                >Export Markdown</a
-              >
-            </li>
-            <li>
-              <a class="dropdown-item" href="#" id="export-html">Export HTML</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="#" id="export-latex"
-                >Export LaTeX</a
-              >
-            </li>
-            <li>
-              <a class="dropdown-item" href="#" id="export-bibtex"
-                >Export BibTeX</a
-              >
-            </li>
+        </h4>
+        <div id="recommendAdvancedCollapse" class="accordion-collapse collapse" aria-labelledby="recommendAdvancedHeading">
+          <div class="accordion-body">
+            <div class="recommend-range-grid">
+              <article class="recommend-range-card" data-slider-label="Interactions">
+                <div class="recommend-range-heading"><div><strong>Interactions</strong><small>Total recorded interactions</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
+                <div id="slider-interactions" class="range-slider"></div>
+                <div class="range-input-row"><label>Min<input id="slider-interactions-min" class="form-control range-input" type="number" value="0" /></label><span>to</span><label>Max<input id="slider-interactions-max" class="form-control range-input" type="number" value="0" /></label></div>
+              </article>
+              <article class="recommend-range-card" data-slider-label="Users">
+                <div class="recommend-range-heading"><div><strong>Users</strong><small>Number of unique users</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
+                <div id="slider-users" class="range-slider"></div>
+                <div class="range-input-row"><label>Min<input id="slider-users-min" class="form-control range-input" type="number" value="0" /></label><span>to</span><label>Max<input id="slider-users-max" class="form-control range-input" type="number" value="0" /></label></div>
+              </article>
+              <article class="recommend-range-card" data-slider-label="Items">
+                <div class="recommend-range-heading"><div><strong>Items</strong><small>Number of unique items</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
+                <div id="slider-items" class="range-slider"></div>
+                <div class="range-input-row"><label>Min<input id="slider-items-min" class="form-control range-input" type="number" value="0" /></label><span>to</span><label>Max<input id="slider-items-max" class="form-control range-input" type="number" value="0" /></label></div>
+              </article>
+              <article class="recommend-range-card" data-slider-label="User-item ratio">
+                <div class="recommend-range-heading"><div><strong>User-item ratio</strong><small>Users relative to items</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
+                <div id="slider-ratio" class="range-slider"></div>
+                <div class="range-input-row"><label>Min<input id="slider-ratio-min" class="form-control range-input" type="number" step="0.1" value="0" /></label><span>to</span><label>Max<input id="slider-ratio-max" class="form-control range-input" type="number" step="0.1" value="0" /></label></div>
+              </article>
+              <article class="recommend-range-card" data-slider-label="Density">
+                <div class="recommend-range-heading"><div><strong>Density</strong><small>Observed user-item pairs</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
+                <div id="slider-density" class="range-slider"></div>
+                <div class="range-input-row"><label>Min<input id="slider-density-min" class="form-control range-input" type="number" step="0.001" value="0" /></label><span>to</span><label>Max<input id="slider-density-max" class="form-control range-input" type="number" step="0.001" value="0" /></label></div>
+              </article>
+              <article class="recommend-range-card" data-slider-label="Maximum ratings per user">
+                <div class="recommend-range-heading"><div><strong>Max ratings / user</strong><small>Highest user activity</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
+                <div id="slider-max-user" class="range-slider"></div>
+                <div class="range-input-row"><label>Min<input id="slider-max-user-min" class="form-control range-input" type="number" value="0" /></label><span>to</span><label>Max<input id="slider-max-user-max" class="form-control range-input" type="number" value="0" /></label></div>
+              </article>
+              <article class="recommend-range-card" data-slider-label="Minimum ratings per user">
+                <div class="recommend-range-heading"><div><strong>Min ratings / user</strong><small>Lowest user activity</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
+                <div id="slider-min-user" class="range-slider"></div>
+                <div class="range-input-row"><label>Min<input id="slider-min-user-min" class="form-control range-input" type="number" value="0" /></label><span>to</span><label>Max<input id="slider-min-user-max" class="form-control range-input" type="number" value="0" /></label></div>
+              </article>
+              <article class="recommend-range-card" data-slider-label="Maximum ratings per item">
+                <div class="recommend-range-heading"><div><strong>Max ratings / item</strong><small>Highest item popularity</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
+                <div id="slider-max-item" class="range-slider"></div>
+                <div class="range-input-row"><label>Min<input id="slider-max-item-min" class="form-control range-input" type="number" value="0" /></label><span>to</span><label>Max<input id="slider-max-item-max" class="form-control range-input" type="number" value="0" /></label></div>
+              </article>
+              <article class="recommend-range-card" data-slider-label="Minimum ratings per item">
+                <div class="recommend-range-heading"><div><strong>Min ratings / item</strong><small>Lowest item popularity</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
+                <div id="slider-min-item" class="range-slider"></div>
+                <div class="range-input-row"><label>Min<input id="slider-min-item-min" class="form-control range-input" type="number" value="0" /></label><span>to</span><label>Max<input id="slider-min-item-max" class="form-control range-input" type="number" value="0" /></label></div>
+              </article>
+              <article class="recommend-range-card" data-slider-label="Mean ratings per user">
+                <div class="recommend-range-heading"><div><strong>Mean ratings / user</strong><small>Average user activity</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
+                <div id="slider-mean-user" class="range-slider"></div>
+                <div class="range-input-row"><label>Min<input id="slider-mean-user-min" class="form-control range-input" type="number" step="0.1" value="0" /></label><span>to</span><label>Max<input id="slider-mean-user-max" class="form-control range-input" type="number" step="0.1" value="0" /></label></div>
+              </article>
+              <article class="recommend-range-card" data-slider-label="Mean ratings per item">
+                <div class="recommend-range-heading"><div><strong>Mean ratings / item</strong><small>Average item popularity</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
+                <div id="slider-mean-item" class="range-slider"></div>
+                <div class="range-input-row"><label>Min<input id="slider-mean-item-min" class="form-control range-input" type="number" step="0.1" value="0" /></label><span>to</span><label>Max<input id="slider-mean-item-max" class="form-control range-input" type="number" step="0.1" value="0" /></label></div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="recommend-action-bar">
+      <div class="recommend-action-copy"><span class="recommend-step-icon recommend-step-icon-small"><i class="fa-solid fa-wand-magic-sparkles"></i></span><div><strong>Ready to generate?</strong><small>Your current settings will be used to build the final selection.</small></div></div>
+      <div class="recommend-actions">
+        <button id="recommend-generate-btn" type="button" class="btn btn-primary recommend-primary-action"><i class="fa-solid fa-wand-magic-sparkles"></i> Generate Recommendation</button>
+        <button id="recommend-open-aps-btn" type="button" class="btn btn-outline-primary" disabled><i class="fa-solid fa-chart-line"></i> Open in APS</button>
+        <button id="recommend-share-btn" type="button" class="btn btn-outline-secondary"><i class="fa-solid fa-link"></i> Share</button>
+        <div class="btn-group">
+          <button id="recommend-export-btn" type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa-solid fa-file-export"></i> Export</button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="recommend-export-btn">
+            <li><a class="dropdown-item" href="#" id="export-image"><i class="fa-solid fa-image"></i> Export image</a></li>
+            <li><a class="dropdown-item" href="#" id="export-markdown"><i class="fa-brands fa-markdown"></i> Export Markdown</a></li>
+            <li><a class="dropdown-item" href="#" id="export-html"><i class="fa-solid fa-code"></i> Export HTML</a></li>
+            <li><a class="dropdown-item" href="#" id="export-latex"><i class="fa-solid fa-square-root-variable"></i> Export LaTeX</a></li>
+            <li><a class="dropdown-item" href="#" id="export-bibtex"><i class="fa-solid fa-book"></i> Export BibTeX</a></li>
           </ul>
         </div>
       </div>
     </div>
+  </section>
+
+  <div id="recommend-loading" class="recommend-loading" style="display: none" role="status" aria-live="polite">
+    <span class="spinner-border text-primary" aria-hidden="true"></span>
+    <span><strong>Generating your recommendation</strong><small>Comparing candidates in the Algorithm Performance Space…</small></span>
   </div>
 
-  <div id="recommend-loading" class="text-center py-3" style="display: none;">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Generating recommendation...</span>
+  <div id="recommend-status" class="alert alert-info recommend-status" role="status" aria-live="polite">
+    Configure your settings and click “Generate Recommendation”.
+  </div>
+
+  <section class="recommend-section recommend-results" aria-labelledby="results-heading">
+    <div class="recommend-section-heading recommend-results-heading">
+      <span class="recommend-step-icon recommend-step-icon-green"><i class="fa-solid fa-check"></i></span>
+      <div><span class="recommend-section-kicker">Step 3</span><h3 id="results-heading">Final Dataset Selection</h3><p id="recommend-results-summary">No datasets selected yet.</p></div>
     </div>
-    <div class="mt-1 text-muted small">Generating recommendation...</div>
-  </div>
+    <ul id="recommend-results-list" class="recommend-results-list"></ul>
 
-  <div id="recommend-status" class="alert alert-info" role="alert">
-    Configure your settings and click "Generate Recommendation".
-  </div>
-
-  <div class="card">
-    <div class="card-body">
-      <h5 class="card-title">Final Dataset Selection</h5>
-      <div id="recommend-results-summary" style="margin-bottom: 0.75rem"></div>
-      <ul id="recommend-results-list" class="list-group"></ul>
-      <!-- Export Modal Placeholder -->
-      <div
-        class="modal fade"
-        id="exportModal"
-        tabindex="-1"
-        aria-labelledby="exportModalLabel"
-        aria-hidden="true"
-      >
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="exportModalLabel">Export Preview</h5>
-              <button
-                type="button"
-                class="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              ></button>
-            </div>
-            <div class="modal-body">
-              <div id="export-preview-area"></div>
-              <div id="export-image-preview" style="margin-top: 1rem"></div>
-              <textarea
-                id="export-textarea"
-                class="form-control"
-                style="margin-top: 1rem; display: none"
-                rows="10"
-                readonly
-              ></textarea>
-            </div>
-            <div class="modal-footer">
-              <button
-                type="button"
-                class="btn btn-secondary"
-                data-bs-dismiss="modal"
-              >
-                Close
-              </button>
-              <button
-                type="button"
-                class="btn btn-primary"
-                id="export-copy-btn"
-              >
-                Copy
-              </button>
-              <button
-                type="button"
-                class="btn btn-success"
-                id="export-download-btn"
-              >
-                Download
-              </button>
-            </div>
-          </div>
+    <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header"><div><span class="recommend-eyebrow">Dataset recommendation</span><h5 class="modal-title" id="exportModalLabel">Export Preview</h5></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+          <div class="modal-body"><div id="export-preview-area"></div><div id="export-image-preview" class="mt-3"></div><textarea id="export-textarea" class="form-control mt-3" style="display: none" rows="10" readonly></textarea></div>
+          <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button type="button" class="btn btn-primary" id="export-copy-btn">Copy</button><button type="button" class="btn btn-success" id="export-download-btn">Download</button></div>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 </div>

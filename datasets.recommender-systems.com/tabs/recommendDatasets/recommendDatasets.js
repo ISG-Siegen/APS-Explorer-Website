@@ -337,11 +337,18 @@ function setInteractionBounds() {
     },
   });
 
+  configureSliderPresentation(
+    sliderEl,
+    interactionsBounds.min,
+    interactionsBounds.max,
+  );
+
   sliderEl.noUiSlider.on("update", function (vals) {
     var minInp = document.getElementById("slider-interactions-min");
     var maxInp = document.getElementById("slider-interactions-max");
     if (minInp) minInp.value = String(Math.round(Number(vals[0])));
     if (maxInp) maxInp.value = String(Math.round(Number(vals[1])));
+    updateSliderVisualState(sliderEl, vals);
   });
 
   sliderEl.noUiSlider.on("change", function () {
@@ -882,6 +889,7 @@ function createDatasetCheckbox(id, name, value) {
   checkbox.id = String(id);
   checkbox.name = name;
   checkbox.value = value;
+  checkbox.className = "recommend-candidate-checkbox";
   return checkbox;
 }
 
@@ -889,9 +897,9 @@ function createCheckboxWrapper(checkbox, htmlFor, text) {
   const label = document.createElement("label");
   label.htmlFor = String(htmlFor);
   label.textContent = text;
-  label.style.marginLeft = "0.25rem";
 
   const wrapper = document.createElement("div");
+  wrapper.className = "recommend-candidate-option";
   wrapper.appendChild(checkbox);
   wrapper.appendChild(label);
   return wrapper;
@@ -899,7 +907,7 @@ function createCheckboxWrapper(checkbox, htmlFor, text) {
 
 function createSelectAllButtons() {
   selectAllDatasetArea = document.createElement("div");
-  selectAllDatasetArea.style.width = "100%";
+  selectAllDatasetArea.className = "recommend-select-all-area";
 
   selectAllDatasetButton = document.createElement("button");
   selectAllDatasetButton.type = "button";
@@ -908,8 +916,6 @@ function createSelectAllButtons() {
 
   let icon = document.createElement("i");
   icon.className = "fa-solid fa-filter";
-  icon.style.setProperty("color", "white", "important");
-  icon.style.marginRight = "0.3rem";
 
   selectAllDatasetButtonText = document.createElement("span");
   selectAllDatasetButtonText.textContent = "Deselect All";
@@ -1187,7 +1193,7 @@ function buildApsVectors(datasetIds) {
 }
 
 function generateRecommendation() {
-  if (loadingElement) loadingElement.style.display = "block";
+  if (loadingElement) loadingElement.style.display = "flex";
   if (statusElement) statusElement.style.display = "none";
   if (generateButtonElement) generateButtonElement.disabled = true;
 
@@ -1336,23 +1342,29 @@ function renderResults() {
 
   resultsSummaryElement.textContent = "Final: " + finalDatasets.length + " | Required: " + requiredDatasetIds.length + " | Recommended: " + recommendedDatasetIds.length;
 
-  finalDatasets.forEach(function (dataset) {
+  finalDatasets.forEach(function (dataset, datasetIndex) {
     var isRequired = requiredDatasetIds.includes(dataset.id);
     var metaParts = getDatasetMetaParts(dataset);
 
     var listItem = document.createElement("li");
-    listItem.className = "list-group-item";
+    listItem.className =
+      "recommend-result-card" + (isRequired ? " is-required" : "");
 
     var headerRow = document.createElement("div");
-    headerRow.className = "d-flex justify-content-between align-items-start";
+    headerRow.className = "recommend-result-header";
 
     var nameDiv = document.createElement("div");
+    nameDiv.className = "recommend-result-name";
+    var indexSpan = document.createElement("span");
+    indexSpan.className = "recommend-result-index";
+    indexSpan.textContent = String(datasetIndex + 1);
     var nameStrong = document.createElement("strong");
     nameStrong.textContent = dataset.name;
+    nameDiv.appendChild(indexSpan);
     nameDiv.appendChild(nameStrong);
 
     var badgesDiv = document.createElement("div");
-    badgesDiv.className = "text-nowrap";
+    badgesDiv.className = "recommend-result-badges";
 
     var feedbackBadge = document.createElement("span");
     feedbackBadge.className = "badge " + (dataset.feedbackType === "explicit" ? "text-bg-info" : "text-bg-warning") + " me-1";
@@ -1370,14 +1382,10 @@ function renderResults() {
 
     if (metaParts.length > 0) {
       var metaDiv = document.createElement("div");
-      metaDiv.className = "text-muted small mt-1";
-      metaParts.forEach(function (part, idx) {
-        if (idx > 0) {
-          var sep = document.createTextNode(" \u00B7 ");
-          metaDiv.appendChild(sep);
-        }
+      metaDiv.className = "recommend-result-meta";
+      metaParts.forEach(function (part) {
         var span = document.createElement("span");
-        span.className = "me-2";
+        span.className = "recommend-meta-chip";
         span.textContent = part.label + ": " + part.value;
         metaDiv.appendChild(span);
       });
@@ -1569,11 +1577,14 @@ function setMetadataRangeBounds() {
 
     noUiSlider.create(sliderEl, createOptions);
 
+    configureSliderPresentation(sliderEl, fmtMin, fmtMax);
+
     sliderEl.noUiSlider.on("update", function (vals) {
       var minInp = document.getElementById(field.sliderId + "-min");
       var maxInp = document.getElementById(field.sliderId + "-max");
       if (minInp) minInp.value = String(Number(vals[0]));
       if (maxInp) maxInp.value = String(Number(vals[1]));
+      updateSliderVisualState(sliderEl, vals);
     });
 
     sliderEl.noUiSlider.on("change", function () {
@@ -1597,6 +1608,41 @@ function setMetadataRangeBounds() {
       if (maxInp) maxInp.addEventListener("change", onInput);
     })(sliderEl);
   });
+}
+
+function configureSliderPresentation(sliderElement, defaultMin, defaultMax) {
+  sliderElement.dataset.defaultMin = String(defaultMin);
+  sliderElement.dataset.defaultMax = String(defaultMax);
+
+  const label =
+    sliderElement.closest(".recommend-range-card")?.dataset.sliderLabel ||
+    "Range";
+  const handles = sliderElement.querySelectorAll(".noUi-handle");
+  if (handles[0]) {
+    handles[0].setAttribute("aria-label", label + " minimum");
+  }
+  if (handles[1]) {
+    handles[1].setAttribute("aria-label", label + " maximum");
+  }
+}
+
+function updateSliderVisualState(sliderElement, values) {
+  const card = sliderElement.closest(".recommend-range-card");
+  if (!card) return;
+
+  const currentMin = Number(values[0]);
+  const currentMax = Number(values[1]);
+  const defaultMin = Number(sliderElement.dataset.defaultMin);
+  const defaultMax = Number(sliderElement.dataset.defaultMax);
+  const epsilon = Math.max(
+    1e-9,
+    Math.abs(defaultMax - defaultMin) * 1e-7,
+  );
+  const isFiltered =
+    Math.abs(currentMin - defaultMin) > epsilon ||
+    Math.abs(currentMax - defaultMax) > epsilon;
+
+  card.classList.toggle("is-filtered", isFiltered);
 }
 
 function formatMinRangeValue(value) {
