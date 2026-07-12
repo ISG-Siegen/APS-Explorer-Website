@@ -7,7 +7,7 @@
 >
   <section class="recommend-hero">
     <div class="recommend-hero-copy">
-      <span class="recommend-eyebrow">Guided dataset selection</span>
+      <span class="recommend-eyebrow">FINALLY</span>
       <h2>Dataset Recommendation</h2>
       <p>
         Build a purposeful dataset collection by combining optional seeds,
@@ -28,7 +28,7 @@
       <span class="recommend-step-icon"><i class="fa-solid fa-database"></i></span>
       <div>
         <span class="recommend-section-kicker">Step 1</span>
-        <h3 id="selection-heading">Choose the dataset pool</h3>
+        <h3 id="selection-heading">Choose the Dataset Pool</h3>
         <p>Add fixed seed datasets and decide which datasets may be considered.</p>
       </div>
     </div>
@@ -50,7 +50,7 @@
                 <strong>Seed Datasets</strong>
                 <small>Always include these datasets</small>
               </span>
-              <span id="required-dataset-header" class="recommend-count-badge">None selected</span>
+              <span id="required-dataset-header" class="recommend-count-badge">None Selected</span>
             </button>
           </h4>
           <div
@@ -59,7 +59,7 @@
             aria-labelledby="headingRequiredDatasets"
           >
             <div id="required-dataset-filter" class="accordion-body">
-              <label class="recommend-field-label" for="required-dataset-input">Find seed datasets</label>
+              <label class="recommend-field-label" for="required-dataset-input">Find Seed Datasets</label>
               <div class="required-dataset-autocomplete">
                 <i class="fa-solid fa-magnifying-glass recommend-input-icon" aria-hidden="true"></i>
                 <div id="required-dataset-chips" class="required-dataset-chips"></div>
@@ -94,7 +94,7 @@
                 <strong>Candidate Datasets</strong>
                 <small>Control the available dataset pool</small>
               </span>
-              <span id="dataset-comparison-header" class="recommend-count-badge">All selected</span>
+              <span id="dataset-comparison-header" class="recommend-count-badge">All Selected</span>
             </button>
           </h4>
           <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne">
@@ -112,7 +112,7 @@
       <span class="recommend-step-icon recommend-step-icon-purple"><i class="fa-solid fa-sliders"></i></span>
       <div>
         <span class="recommend-section-kicker">Step 2</span>
-        <h3 id="settings-heading">Configure the recommendation</h3>
+        <h3 id="settings-heading">Configure the Recommendation</h3>
         <p>Choose the selection strategy and narrow the pool with optional filters.</p>
       </div>
     </div>
@@ -120,15 +120,15 @@
     <div class="recommend-primary-settings">
       <label class="recommend-setting-card recommend-target-card" for="recommend-target-count">
         <span class="recommend-setting-icon"><i class="fa-solid fa-bullseye"></i></span>
-        <span class="recommend-setting-copy"><strong>Total dataset count</strong><small>Size of the final selection</small></span>
+        <span class="recommend-setting-copy"><strong>Total Dataset Count</strong><small>Size of the final selection</small></span>
         <input id="recommend-target-count" class="form-control" type="number" min="1" step="1" value="5" />
       </label>
 
       <label class="recommend-setting-card" for="recommend-method">
         <span class="recommend-setting-icon"><i class="fa-solid fa-shuffle"></i></span>
-        <span class="recommend-setting-copy"><strong>Selection method</strong><small>How datasets are chosen</small></span>
+        <span class="recommend-setting-copy"><strong>Selection Method</strong><small>How datasets are chosen</small></span>
         <select id="recommend-method" class="form-select">
-          <option value="non_diverse" selected>Non-diverse</option>
+          <option value="non_diverse" selected>Non-Diverse</option>
           <option value="diverse_convex_hull">Diverse Convex Hull</option>
           <option value="diverse_effcov">Diverse EffCov</option>
           <option value="random">Random</option>
@@ -137,7 +137,7 @@
 
       <label class="recommend-setting-card" for="recommend-metric">
         <span class="recommend-setting-icon"><i class="fa-solid fa-chart-simple"></i></span>
-        <span class="recommend-setting-copy"><strong>APS metric</strong><small>Performance signal to compare</small></span>
+        <span class="recommend-setting-copy"><strong>APS Metric</strong><small>Performance signal to compare</small></span>
         <select id="recommend-metric" class="form-select">
           <option value="ndcg" selected>NDCG (NDCG@k)</option>
           <option value="hr">HR</option>
@@ -159,7 +159,7 @@
 
       <label class="recommend-setting-card" for="recommend-feedback-type">
         <span class="recommend-setting-icon"><i class="fa-solid fa-message"></i></span>
-        <span class="recommend-setting-copy"><strong>Feedback type</strong><small>Restrict the interaction signal</small></span>
+        <span class="recommend-setting-copy"><strong>Feedback Type</strong><small>Restrict the interaction signal</small></span>
         <select id="recommend-feedback-type" class="form-select"><option value="all" selected>All</option></select>
       </label>
     </div>
@@ -169,7 +169,7 @@
         <h4 class="accordion-header" id="recommendAdvancedHeading">
           <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#recommendAdvancedCollapse" aria-expanded="false" aria-controls="recommendAdvancedCollapse">
             <span class="recommend-accordion-icon recommend-accordion-icon-filter"><i class="fa-solid fa-filter"></i></span>
-            <span class="recommend-accordion-copy"><strong>Advanced range filters</strong><small>Fine-tune candidates using dataset characteristics</small></span>
+            <span class="recommend-accordion-copy"><strong>Advanced Range Filters</strong><small>Fine-tune candidates using dataset characteristics</small></span>
             <span class="recommend-optional-badge">Optional</span>
           </button>
         </h4>
@@ -191,8 +191,8 @@
                 <div id="slider-items" class="range-slider"></div>
                 <div class="range-input-row"><label>Min<input id="slider-items-min" class="form-control range-input" type="number" value="0" /></label><span>to</span><label>Max<input id="slider-items-max" class="form-control range-input" type="number" value="0" /></label></div>
               </article>
-              <article class="recommend-range-card" data-slider-label="User-item ratio">
-                <div class="recommend-range-heading"><div><strong>User-item ratio</strong><small>Users relative to items</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
+              <article class="recommend-range-card" data-slider-label="User-Item Ratio">
+                <div class="recommend-range-heading"><div><strong>User-Item Ratio</strong><small>Users relative to items</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
                 <div id="slider-ratio" class="range-slider"></div>
                 <div class="range-input-row"><label>Min<input id="slider-ratio-min" class="form-control range-input" type="number" step="0.1" value="0" /></label><span>to</span><label>Max<input id="slider-ratio-max" class="form-control range-input" type="number" step="0.1" value="0" /></label></div>
               </article>
@@ -202,32 +202,32 @@
                 <div class="range-input-row"><label>Min<input id="slider-density-min" class="form-control range-input" type="number" step="0.001" value="0" /></label><span>to</span><label>Max<input id="slider-density-max" class="form-control range-input" type="number" step="0.001" value="0" /></label></div>
               </article>
               <article class="recommend-range-card" data-slider-label="Maximum ratings per user">
-                <div class="recommend-range-heading"><div><strong>Max ratings / user</strong><small>Highest user activity</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
+                <div class="recommend-range-heading"><div><strong>Max Ratings / User</strong><small>Highest user activity</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
                 <div id="slider-max-user" class="range-slider"></div>
                 <div class="range-input-row"><label>Min<input id="slider-max-user-min" class="form-control range-input" type="number" value="0" /></label><span>to</span><label>Max<input id="slider-max-user-max" class="form-control range-input" type="number" value="0" /></label></div>
               </article>
               <article class="recommend-range-card" data-slider-label="Minimum ratings per user">
-                <div class="recommend-range-heading"><div><strong>Min ratings / user</strong><small>Lowest user activity</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
+                <div class="recommend-range-heading"><div><strong>Min Ratings / User</strong><small>Lowest user activity</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
                 <div id="slider-min-user" class="range-slider"></div>
                 <div class="range-input-row"><label>Min<input id="slider-min-user-min" class="form-control range-input" type="number" value="0" /></label><span>to</span><label>Max<input id="slider-min-user-max" class="form-control range-input" type="number" value="0" /></label></div>
               </article>
               <article class="recommend-range-card" data-slider-label="Maximum ratings per item">
-                <div class="recommend-range-heading"><div><strong>Max ratings / item</strong><small>Highest item popularity</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
+                <div class="recommend-range-heading"><div><strong>Max Ratings / Item</strong><small>Highest item popularity</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
                 <div id="slider-max-item" class="range-slider"></div>
                 <div class="range-input-row"><label>Min<input id="slider-max-item-min" class="form-control range-input" type="number" value="0" /></label><span>to</span><label>Max<input id="slider-max-item-max" class="form-control range-input" type="number" value="0" /></label></div>
               </article>
               <article class="recommend-range-card" data-slider-label="Minimum ratings per item">
-                <div class="recommend-range-heading"><div><strong>Min ratings / item</strong><small>Lowest item popularity</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
+                <div class="recommend-range-heading"><div><strong>Min Ratings / Item</strong><small>Lowest item popularity</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
                 <div id="slider-min-item" class="range-slider"></div>
                 <div class="range-input-row"><label>Min<input id="slider-min-item-min" class="form-control range-input" type="number" value="0" /></label><span>to</span><label>Max<input id="slider-min-item-max" class="form-control range-input" type="number" value="0" /></label></div>
               </article>
               <article class="recommend-range-card" data-slider-label="Mean ratings per user">
-                <div class="recommend-range-heading"><div><strong>Mean ratings / user</strong><small>Average user activity</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
+                <div class="recommend-range-heading"><div><strong>Mean Ratings / User</strong><small>Average user activity</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
                 <div id="slider-mean-user" class="range-slider"></div>
                 <div class="range-input-row"><label>Min<input id="slider-mean-user-min" class="form-control range-input" type="number" step="0.1" value="0" /></label><span>to</span><label>Max<input id="slider-mean-user-max" class="form-control range-input" type="number" step="0.1" value="0" /></label></div>
               </article>
               <article class="recommend-range-card" data-slider-label="Mean ratings per item">
-                <div class="recommend-range-heading"><div><strong>Mean ratings / item</strong><small>Average item popularity</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
+                <div class="recommend-range-heading"><div><strong>Mean Ratings / Item</strong><small>Average item popularity</small></div><span class="recommend-active-filter"><i class="fa-solid fa-check"></i> Active</span></div>
                 <div id="slider-mean-item" class="range-slider"></div>
                 <div class="range-input-row"><label>Min<input id="slider-mean-item-min" class="form-control range-input" type="number" step="0.1" value="0" /></label><span>to</span><label>Max<input id="slider-mean-item-max" class="form-control range-input" type="number" step="0.1" value="0" /></label></div>
               </article>
@@ -246,7 +246,7 @@
         <div class="btn-group">
           <button id="recommend-export-btn" type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa-solid fa-file-export"></i> Export</button>
           <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="recommend-export-btn">
-            <li><a class="dropdown-item" href="#" id="export-image"><i class="fa-solid fa-image"></i> Export image</a></li>
+            <li><a class="dropdown-item" href="#" id="export-image"><i class="fa-solid fa-image"></i> Export Image</a></li>
             <li><a class="dropdown-item" href="#" id="export-markdown"><i class="fa-brands fa-markdown"></i> Export Markdown</a></li>
             <li><a class="dropdown-item" href="#" id="export-html"><i class="fa-solid fa-code"></i> Export HTML</a></li>
             <li><a class="dropdown-item" href="#" id="export-latex"><i class="fa-solid fa-square-root-variable"></i> Export LaTeX</a></li>
@@ -276,7 +276,7 @@
     <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
-          <div class="modal-header"><div><span class="recommend-eyebrow">Dataset recommendation</span><h5 class="modal-title" id="exportModalLabel">Export Preview</h5></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+          <div class="modal-header"><div><span class="recommend-eyebrow">Dataset Recommendation</span><h5 class="modal-title" id="exportModalLabel">Export Preview</h5></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
           <div class="modal-body"><div id="export-preview-area"></div><div id="export-image-preview" class="mt-3"></div><textarea id="export-textarea" class="form-control mt-3" style="display: none" rows="10" readonly></textarea></div>
           <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button type="button" class="btn btn-primary" id="export-copy-btn">Copy</button><button type="button" class="btn btn-success" id="export-download-btn">Download</button></div>
         </div>

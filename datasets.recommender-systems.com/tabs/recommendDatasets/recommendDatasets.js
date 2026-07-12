@@ -1702,9 +1702,9 @@ function updateFilterHeader(
   keyName,
 ) {
   if (checkedCount === totalCount) {
-    headerElement.innerText = "(All selected)";
+    headerElement.innerText = "(All Selected)";
   } else if (checkedCount === 0) {
-    headerElement.innerText = "(None selected)";
+    headerElement.innerText = "(None Selected)";
   } else if (checkedCount === 1) {
     const selectedId = selectedItems[0];
     const selectedItem = allItems.find((item) => item.id === selectedId);
