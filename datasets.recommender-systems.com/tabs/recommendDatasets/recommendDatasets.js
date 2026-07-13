@@ -33,6 +33,24 @@ var statusElement = null;
 var loadingElement = null;
 var resultsSummaryElement = null;
 var resultsListElement = null;
+var resultsHeadElement = null;
+var resultsEmptyElement = null;
+var resultsTableElement = null;
+var resultColumnOptionsElement = null;
+var resultSortStatusElement = null;
+var exportButtonElement = null;
+var apsPreviewCanvasElement = null;
+var apsPreviewEmptyElement = null;
+var apsPreviewMetaElement = null;
+var apsPreviewNoteElement = null;
+var apsZoomOutButtonElement = null;
+var apsZoomInButtonElement = null;
+var apsResetButtonElement = null;
+var apsApplyRangeButtonElement = null;
+var apsXMinInputElement = null;
+var apsXMaxInputElement = null;
+var apsYMinInputElement = null;
+var apsYMaxInputElement = null;
 
 var methodSelectElement = null;
 var metricSelectElement = null;
@@ -47,6 +65,21 @@ var __allAlgorithms = null;
 var __performanceResults = null;
 
 var kValueKeyMap = { "1": "one", "3": "three", "5": "five", "10": "ten", "20": "twenty" };
+var resultTablePreferenceKey = "finally.recommendation-table.v1";
+var defaultResultColumnKeys = ["feedback", "interactions", "users", "items", "density", "ratio"];
+var visibleResultColumnKeys = defaultResultColumnKeys.slice();
+var resultOrderIds = [];
+var resultSortKey = null;
+var resultSortDirection = null;
+var draggedResultId = null;
+var lastRecommendationPoolIds = [];
+var apsPreviewChart = null;
+var apsPreviewRequestId = 0;
+var apsPreviewPoints = [];
+var apsPreviewDefaultBounds = null;
+var apsPreviewIsFitted = true;
+var apsPreviewResizeTimer = null;
+var apsPreviewResizeHandler = null;
 
 var activeFilters = {
   feedbackType: "all",
@@ -69,6 +102,23 @@ function formatRatio(r) {
   if (r == null || !Number.isFinite(Number(r))) return "—";
   return Number(r).toFixed(1);
 }
+
+var resultColumnDefinitions = [
+  { key: "name", label: "Dataset", fixed: true, value: function (dataset) { return dataset.name || ""; } },
+  { key: "status", label: "Status", fixed: true, value: function (dataset) { return requiredDatasetIds.includes(dataset.id) ? "Required" : "Recommended"; } },
+  { key: "feedback", label: "Feedback Type", value: function (dataset) { return dataset.feedbackType || "\u2014"; } },
+  { key: "interactions", label: "Interactions", numeric: true, value: function (dataset) { return formatNumber(dataset.numberOfInteractions); }, raw: function (dataset) { return Number(dataset.numberOfInteractions); } },
+  { key: "users", label: "Users", numeric: true, value: function (dataset) { return formatNumber(dataset.numberOfUsers); }, raw: function (dataset) { return Number(dataset.numberOfUsers); } },
+  { key: "items", label: "Items", numeric: true, value: function (dataset) { return formatNumber(dataset.numberOfItems); }, raw: function (dataset) { return Number(dataset.numberOfItems); } },
+  { key: "density", label: "Density", numeric: true, value: function (dataset) { return formatDensity(dataset.density); }, raw: function (dataset) { return Number(dataset.density); } },
+  { key: "ratio", label: "User-Item Ratio", numeric: true, value: function (dataset) { return formatRatio(dataset.userItemRatio); }, raw: function (dataset) { return Number(dataset.userItemRatio); } },
+  { key: "maxUser", label: "Max Ratings / User", numeric: true, value: function (dataset) { return formatNumber(dataset.highestNumberOfRatingBySingleUser); }, raw: function (dataset) { return Number(dataset.highestNumberOfRatingBySingleUser); } },
+  { key: "minUser", label: "Min Ratings / User", numeric: true, value: function (dataset) { return formatNumber(dataset.lowestNumberOfRatingBySingleUser); }, raw: function (dataset) { return Number(dataset.lowestNumberOfRatingBySingleUser); } },
+  { key: "maxItem", label: "Max Ratings / Item", numeric: true, value: function (dataset) { return formatNumber(dataset.highestNumberOfRatingOnSingleItem); }, raw: function (dataset) { return Number(dataset.highestNumberOfRatingOnSingleItem); } },
+  { key: "minItem", label: "Min Ratings / Item", numeric: true, value: function (dataset) { return formatNumber(dataset.lowestNumberOfRatingOnSingleItem); }, raw: function (dataset) { return Number(dataset.lowestNumberOfRatingOnSingleItem); } },
+  { key: "meanUser", label: "Mean Ratings / User", numeric: true, value: function (dataset) { return formatNumber(dataset.meanNumberOfRatingsByUser); }, raw: function (dataset) { return Number(dataset.meanNumberOfRatingsByUser); } },
+  { key: "meanItem", label: "Mean Ratings / Item", numeric: true, value: function (dataset) { return formatNumber(dataset.meanNumberOfRatingsOnItem); }, raw: function (dataset) { return Number(dataset.meanNumberOfRatingsOnItem); } },
+];
 
 function getDatasetMetaParts(dataset) {
   var parts = [];
@@ -97,6 +147,400 @@ function getFinalDatasets() {
   return finalDatasetIds
     .map(function (id) { return datasets.find(function (d) { return d.id === id; }); })
     .filter(function (d) { return !!d; });
+}
+
+function getSelectedOptionText(element, fallback) {
+  if (!element || element.selectedIndex < 0) return fallback;
+  return element.options[element.selectedIndex]?.text || fallback;
+}
+
+function getExportFilterDetails() {
+  var details = [];
+  var interactionIsDefault = interactionsBounds.min !== null && interactionsBounds.max !== null
+    && activeFilters.minInteractions === interactionsBounds.min
+    && activeFilters.maxInteractions === interactionsBounds.max;
+  details.push({
+    label: "Feedback Type",
+    value: activeFilters.feedbackType === "all" ? "All" : activeFilters.feedbackType,
+    active: activeFilters.feedbackType !== "all",
+  });
+  details.push({
+    label: "Interactions",
+    value: formatNumber(activeFilters.minInteractions) + " to " + formatNumber(activeFilters.maxInteractions),
+    active: !interactionIsDefault,
+  });
+
+  var labels = {
+    numberOfUsers: "Users",
+    numberOfItems: "Items",
+    userItemRatio: "User-Item Ratio",
+    density: "Density",
+    highestNumberOfRatingBySingleUser: "Max Ratings / User",
+    lowestNumberOfRatingBySingleUser: "Min Ratings / User",
+    highestNumberOfRatingOnSingleItem: "Max Ratings / Item",
+    lowestNumberOfRatingOnSingleItem: "Min Ratings / Item",
+    meanNumberOfRatingsByUser: "Mean Ratings / User",
+    meanNumberOfRatingsOnItem: "Mean Ratings / Item",
+  };
+
+  metadataRangeFields.forEach(function (field) {
+    var range = activeFilters.metadataRanges[field.key];
+    var bounds = metadataRangeBounds[field.key];
+    if (!range || !bounds) return;
+    details.push({
+      label: labels[field.key] || field.key,
+      value: field.format(range.min) + " to " + field.format(range.max),
+      active: !isDefaultMetadataRange(field.key, range),
+    });
+  });
+  return details;
+}
+
+function buildExportReport() {
+  readActiveFiltersFromUi();
+  var rows = getConfiguredFinalDatasets();
+  var columns = getVisibleResultColumns();
+  var poolIds = lastRecommendationPoolIds.length > 0
+    ? lastRecommendationPoolIds.slice()
+    : getCandidatePool().map(function (dataset) { return dataset.id; });
+  var poolDatasets = poolIds
+    .map(function (id) { return datasets.find(function (dataset) { return dataset.id === id; }); })
+    .filter(function (dataset) { return !!dataset; });
+  var sortDescription = resultSortKey
+    ? getResultColumn(resultSortKey).label + " (" + (resultSortDirection === "desc" ? "descending" : "ascending") + ")"
+    : "Custom Order";
+  var now = new Date();
+  var apsPoints = [];
+  if (apsPreviewChart) {
+    apsPreviewChart.data.datasets.forEach(function (chartDataset) {
+      chartDataset.data.forEach(function (point) {
+        apsPoints.push({ id: point.id, name: point.name, status: point.status, x: point.x, y: point.y });
+      });
+    });
+  }
+  var apsImage = null;
+  try {
+    if (apsPreviewCanvasElement && apsPreviewCanvasElement.style.display !== "none") {
+      apsImage = apsPreviewCanvasElement.toDataURL("image/png");
+    }
+  } catch (error) {
+    apsImage = null;
+  }
+
+  return {
+    title: "FINALLY: Dataset Recommendation",
+    generatedAt: now.toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }),
+    generatedIso: now.toISOString(),
+    version: versionNumber,
+    source: "https://datasets.recommender-systems.com",
+    rows: rows,
+    columns: columns,
+    poolDatasets: poolDatasets,
+    poolIds: poolIds,
+    apsPoints: apsPoints,
+    apsImage: apsImage,
+    filters: getExportFilterDetails(),
+    settings: [
+      { label: "Selection Method", value: getSelectedOptionText(methodSelectElement, getSelectedMethod()) },
+      { label: "APS Metric", value: getSelectedOptionText(metricSelectElement, metricSelectElement?.value || "NDCG") },
+      { label: "K-Value", value: "@" + (kValueSelectElement?.value || "10") },
+      { label: "Target Dataset Count", value: String(getValidatedTargetCount()) },
+      { label: "Selected Candidates", value: selectedDatasets.length + " of " + datasets.length },
+      { label: "Evaluated Pool", value: poolIds.length + " datasets" },
+      { label: "Result Order", value: sortDescription },
+      { label: "Visible Parameters", value: columns.map(function (column) { return column.label; }).join(", ") },
+    ],
+    summary: {
+      final: rows.length,
+      required: requiredDatasetIds.length,
+      recommended: recommendedDatasetIds.length,
+      pool: poolIds.length,
+    },
+  };
+}
+
+function markdownCell(value) {
+  return String(value ?? "\u2014").replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
+}
+
+function renderRecommendationImage() {
+  var report = buildExportReport();
+  if (report.rows.length === 0) return null;
+
+  var columnWidths = report.columns.map(function (column) {
+    if (column.key === "name") return 250;
+    if (column.key === "status") return 125;
+    return Math.max(125, Math.min(180, column.label.length * 7 + 34));
+  });
+  var tableWidth = 48 + columnWidths.reduce(function (sum, width) { return sum + width; }, 0);
+  var logicalWidth = Math.max(1280, tableWidth + 80);
+  var settingsText = report.settings.map(function (setting) { return setting.label + ": " + setting.value; }).join("  |  ");
+  var filterText = report.filters.map(function (filter) { return filter.label + ": " + filter.value + (filter.active ? " (active)" : ""); }).join("  |  ");
+  var settingsLines = Math.max(1, Math.ceil(settingsText.length / Math.max(80, logicalWidth / 8)));
+  var filterLines = Math.max(1, Math.ceil(filterText.length / Math.max(80, logicalWidth / 8)));
+  var chartHeight = report.apsImage ? 430 : 0;
+  var tableHeight = 42 + report.rows.length * 40;
+  var logicalHeight = 165 + settingsLines * 20 + 48 + filterLines * 20 + 64 + tableHeight + (chartHeight ? chartHeight + 70 : 0) + 70;
+  var pixelRatio = 2;
+  var canvas = document.createElement("canvas");
+  canvas.width = logicalWidth * pixelRatio;
+  canvas.height = logicalHeight * pixelRatio;
+  canvas.style.width = logicalWidth + "px";
+  canvas.style.height = logicalHeight + "px";
+  var ctx = canvas.getContext("2d");
+  ctx.scale(pixelRatio, pixelRatio);
+
+  function drawFittedText(text, x, y, maxWidth) {
+    var fitted = String(text ?? "\u2014");
+    while (fitted.length > 1 && ctx.measureText(fitted).width > maxWidth) fitted = fitted.slice(0, -1);
+    if (fitted !== String(text ?? "\u2014")) fitted = fitted.slice(0, -1) + "\u2026";
+    ctx.fillText(fitted, x, y);
+  }
+
+  function drawWrappedText(text, x, y, maxWidth, lineHeight) {
+    var words = String(text).split(/\s+/);
+    var line = "";
+    words.forEach(function (word) {
+      var candidate = line ? line + " " + word : word;
+      if (line && ctx.measureText(candidate).width > maxWidth) {
+        ctx.fillText(line, x, y);
+        y += lineHeight;
+        line = word;
+      } else {
+        line = candidate;
+      }
+    });
+    if (line) ctx.fillText(line, x, y);
+    return y;
+  }
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, logicalWidth, logicalHeight);
+  ctx.fillStyle = "#17345f";
+  ctx.fillRect(0, 0, logicalWidth, 126);
+  ctx.fillStyle = "#8fb2ff";
+  ctx.font = "800 14px Arial, sans-serif";
+  ctx.fillText("FINALLY", 40, 34);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "700 30px Arial, sans-serif";
+  ctx.fillText("Dataset Recommendation", 40, 70);
+  ctx.fillStyle = "#dce7fb";
+  ctx.font = "14px Arial, sans-serif";
+  ctx.fillText("Final: " + report.summary.final + "  |  Required: " + report.summary.required + "  |  Recommended: " + report.summary.recommended + "  |  Pool: " + report.summary.pool, 40, 99);
+  ctx.textAlign = "right";
+  ctx.fillText(report.generatedAt, logicalWidth - 40, 99);
+  ctx.textAlign = "left";
+
+  var y = 158;
+  ctx.fillStyle = "#21304a";
+  ctx.font = "700 17px Arial, sans-serif";
+  ctx.fillText("Recommendation Configuration", 40, y);
+  y += 27;
+  ctx.fillStyle = "#5d6b81";
+  ctx.font = "12px Arial, sans-serif";
+  y = drawWrappedText(settingsText, 40, y, logicalWidth - 80, 20) + 31;
+
+  ctx.fillStyle = "#21304a";
+  ctx.font = "700 17px Arial, sans-serif";
+  ctx.fillText("Dataset Filters", 40, y);
+  y += 27;
+  ctx.fillStyle = "#5d6b81";
+  ctx.font = "12px Arial, sans-serif";
+  y = drawWrappedText(filterText, 40, y, logicalWidth - 80, 20) + 35;
+
+  ctx.fillStyle = "#21304a";
+  ctx.font = "700 17px Arial, sans-serif";
+  ctx.fillText("Configured Result Table", 40, y);
+  y += 20;
+  var tableX = 40;
+  var rowY = y;
+  ctx.fillStyle = "#edf2fb";
+  ctx.fillRect(tableX, rowY, tableWidth, 42);
+  ctx.fillStyle = "#58677d";
+  ctx.font = "700 11px Arial, sans-serif";
+  ctx.textBaseline = "middle";
+  ctx.fillText("#", tableX + 15, rowY + 21);
+  var cellX = tableX + 48;
+  report.columns.forEach(function (column, index) {
+    drawFittedText(column.label.toUpperCase(), cellX + 9, rowY + 21, columnWidths[index] - 18);
+    cellX += columnWidths[index];
+  });
+  rowY += 42;
+
+  report.rows.forEach(function (dataset, rowIndex) {
+    ctx.fillStyle = rowIndex % 2 === 0 ? "#ffffff" : "#f8faff";
+    ctx.fillRect(tableX, rowY, tableWidth, 40);
+    ctx.fillStyle = requiredDatasetIds.includes(dataset.id) ? "#315fd1" : "#1f9d62";
+    ctx.fillRect(tableX, rowY, 4, 40);
+    ctx.fillStyle = "#657289";
+    ctx.font = "12px Arial, sans-serif";
+    ctx.fillText(String(rowIndex + 1), tableX + 16, rowY + 20);
+    cellX = tableX + 48;
+    report.columns.forEach(function (column, index) {
+      ctx.fillStyle = column.key === "name" ? "#21304a" : "#536178";
+      ctx.font = column.key === "name" ? "700 12px Arial, sans-serif" : "12px Arial, sans-serif";
+      drawFittedText(column.value(dataset), cellX + 9, rowY + 20, columnWidths[index] - 18);
+      cellX += columnWidths[index];
+    });
+    rowY += 40;
+  });
+  y = rowY + 34;
+
+  if (report.apsImage && apsPreviewCanvasElement) {
+    ctx.fillStyle = "#21304a";
+    ctx.font = "700 17px Arial, sans-serif";
+    ctx.fillText("Algorithm Performance Space", 40, y);
+    y += 18;
+    var chartWidth = Math.min(900, logicalWidth - 80);
+    var chartDrawHeight = 360;
+    var chartX = (logicalWidth - chartWidth) / 2;
+    ctx.drawImage(apsPreviewCanvasElement, chartX, y, chartWidth, chartDrawHeight);
+    y += chartDrawHeight + 24;
+    var legendItems = [["Pool", "#aeb9c9"], ["Recommended", "#1f9d62"], ["Required", "#315fd1"]];
+    var legendX = logicalWidth / 2 - 145;
+    ctx.font = "12px Arial, sans-serif";
+    legendItems.forEach(function (item) {
+      ctx.fillStyle = item[1];
+      ctx.beginPath();
+      ctx.arc(legendX, y, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#5d6b81";
+      ctx.fillText(item[0], legendX + 10, y);
+      legendX += item[0] === "Recommended" ? 125 : 85;
+    });
+  }
+
+  ctx.strokeStyle = "#dbe2ee";
+  ctx.beginPath();
+  ctx.moveTo(40, logicalHeight - 47);
+  ctx.lineTo(logicalWidth - 40, logicalHeight - 47);
+  ctx.stroke();
+  ctx.fillStyle = "#758198";
+  ctx.font = "11px Arial, sans-serif";
+  ctx.textBaseline = "middle";
+  ctx.fillText(report.source, 40, logicalHeight - 24);
+  ctx.textAlign = "right";
+  ctx.fillText("FINALLY v" + report.version + " \u00b7 " + report.generatedIso, logicalWidth - 40, logicalHeight - 24);
+  return canvas;
+}
+
+function exportAsMarkdown() {
+  var report = buildExportReport();
+  if (report.rows.length === 0) return "No datasets to export.";
+  var lines = ["# " + report.title, "", "Generated: " + report.generatedAt, "", "## Summary", ""];
+  lines.push("- Final datasets: " + report.summary.final);
+  lines.push("- Required datasets: " + report.summary.required);
+  lines.push("- Recommended datasets: " + report.summary.recommended);
+  lines.push("- Evaluated pool: " + report.summary.pool);
+  lines.push("", "## Recommendation Configuration", "", "| Setting | Value |", "|---|---|");
+  report.settings.forEach(function (setting) { lines.push("| " + markdownCell(setting.label) + " | " + markdownCell(setting.value) + " |"); });
+  lines.push("", "## Dataset Filters", "", "| Filter | Range / Value | Active |", "|---|---|---|");
+  report.filters.forEach(function (filter) { lines.push("| " + markdownCell(filter.label) + " | " + markdownCell(filter.value) + " | " + (filter.active ? "Yes" : "No") + " |"); });
+  lines.push("", "## Final Dataset Selection", "");
+  lines.push("| # | " + report.columns.map(function (column) { return markdownCell(column.label); }).join(" | ") + " |");
+  lines.push("|---|" + report.columns.map(function () { return "---|"; }).join(""));
+  report.rows.forEach(function (dataset, index) {
+    lines.push("| " + (index + 1) + " | " + report.columns.map(function (column) { return markdownCell(column.value(dataset)); }).join(" | ") + " |");
+  });
+  lines.push("", "## APS Dataset Pool", "");
+  if (report.apsPoints.length > 0) {
+    lines.push("| Dataset | Status | APS Dimension 1 | APS Dimension 2 |", "|---|---|---:|---:|");
+    report.apsPoints.forEach(function (point) { lines.push("| " + markdownCell(point.name) + " | " + point.status + " | " + point.x.toFixed(6) + " | " + point.y.toFixed(6) + " |"); });
+  } else {
+    lines.push("APS coordinates were not available when this report was generated.");
+  }
+  lines.push("", "_Generated by [FINALLY](" + report.source + "), version " + report.version + "._");
+  return lines.join("\n");
+}
+
+function escapeReportHtml(value) {
+  return String(value ?? "\u2014").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+function exportAsHtml() {
+  var report = buildExportReport();
+  if (report.rows.length === 0) return "<!doctype html><html><body><p>No datasets to export.</p></body></html>";
+  var settings = report.settings.map(function (setting) { return "<div><dt>" + escapeReportHtml(setting.label) + "</dt><dd>" + escapeReportHtml(setting.value) + "</dd></div>"; }).join("");
+  var filters = report.filters.map(function (filter) { return "<tr><td>" + escapeReportHtml(filter.label) + "</td><td>" + escapeReportHtml(filter.value) + "</td><td>" + (filter.active ? "Active" : "Full range") + "</td></tr>"; }).join("");
+  var headers = report.columns.map(function (column) { return "<th>" + escapeReportHtml(column.label) + "</th>"; }).join("");
+  var rows = report.rows.map(function (dataset, index) { return "<tr><td>" + (index + 1) + "</td>" + report.columns.map(function (column) { return "<td>" + escapeReportHtml(column.value(dataset)) + "</td>"; }).join("") + "</tr>"; }).join("");
+  var apsRows = report.apsPoints.map(function (point) { return "<tr><td>" + escapeReportHtml(point.name) + "</td><td>" + point.status + "</td><td>" + point.x.toFixed(6) + "</td><td>" + point.y.toFixed(6) + "</td></tr>"; }).join("");
+  var chart = report.apsImage ? '<figure><img src="' + report.apsImage + '" alt="Algorithm Performance Space"><figcaption>Pool datasets are gray, recommended datasets green, and required datasets blue.</figcaption></figure>' : "";
+  return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + escapeReportHtml(report.title) + '</title><style>body{margin:0;background:#f4f7fb;color:#26344c;font:14px Arial,sans-serif}main{max-width:1200px;margin:auto;padding:32px}header{padding:28px;border-radius:16px;background:#17345f;color:#fff}header small{color:#9fbcf4;font-weight:800;letter-spacing:.12em}h1{margin:.35rem 0}section{margin-top:20px;padding:22px;border:1px solid #dbe3ef;border-radius:14px;background:#fff}dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}dl div{padding:12px;border-radius:9px;background:#f5f8fc}dt{color:#68758a;font-size:11px;font-weight:700;text-transform:uppercase}dd{margin:5px 0 0;font-weight:700}table{width:100%;border-collapse:collapse}th,td{padding:9px;border-bottom:1px solid #e5eaf2;text-align:left;white-space:nowrap}th{background:#edf2fb;font-size:11px;text-transform:uppercase}.scroll{overflow:auto}figure{text-align:center}img{max-width:100%;height:auto}figcaption{color:#69768b;font-size:12px}footer{padding:24px;color:#69768b;text-align:center}</style></head><body><main><header><small>FINALLY</small><h1>Dataset Recommendation</h1><p>Final: ' + report.summary.final + ' &middot; Required: ' + report.summary.required + ' &middot; Recommended: ' + report.summary.recommended + ' &middot; Pool: ' + report.summary.pool + '</p><time>' + escapeReportHtml(report.generatedAt) + '</time></header><section><h2>Recommendation Configuration</h2><dl>' + settings + '</dl></section><section><h2>Dataset Filters</h2><div class="scroll"><table><thead><tr><th>Filter</th><th>Range / Value</th><th>State</th></tr></thead><tbody>' + filters + '</tbody></table></div></section><section><h2>Final Dataset Selection</h2><div class="scroll"><table><thead><tr><th>#</th>' + headers + '</tr></thead><tbody>' + rows + '</tbody></table></div></section><section><h2>Algorithm Performance Space</h2>' + chart + '<div class="scroll"><table><thead><tr><th>Dataset</th><th>Status</th><th>APS Dimension 1</th><th>APS Dimension 2</th></tr></thead><tbody>' + apsRows + '</tbody></table></div></section><footer>Generated by FINALLY v' + escapeReportHtml(report.version) + ' &middot; <a href="' + report.source + '">' + report.source + '</a></footer></main></body></html>';
+}
+
+function escapeLatexReport(value) {
+  var replacements = {
+    "\\": "\\textbackslash{}",
+    "&": "\\&",
+    "%": "\\%",
+    "$": "\\$",
+    "#": "\\#",
+    "_": "\\_",
+    "{": "\\{",
+    "}": "\\}",
+    "~": "\\textasciitilde{}",
+    "^": "\\textasciicircum{}",
+  };
+  return String(value ?? "--").replace(/[\\&%$#_{}~^]/g, function (character) {
+    return replacements[character];
+  });
+}
+
+function exportAsLatex() {
+  var report = buildExportReport();
+  if (report.rows.length === 0) return "% No datasets to export.";
+  var lines = ["\\documentclass{article}", "\\usepackage[margin=1.8cm]{geometry}", "\\usepackage{booktabs,longtable,array,hyperref}", "\\begin{document}", "\\title{FINALLY: Dataset Recommendation}", "\\author{FINALLY}", "\\date{" + escapeLatexReport(report.generatedAt) + "}", "\\maketitle", "\\section{Summary}"];
+  lines.push("Final datasets: " + report.summary.final + ", required datasets: " + report.summary.required + ", recommended datasets: " + report.summary.recommended + ", evaluated pool: " + report.summary.pool + ".");
+  lines.push("\\section{Recommendation Configuration}", "\\begin{description}");
+  report.settings.forEach(function (setting) { lines.push("\\item[" + escapeLatexReport(setting.label) + "] " + escapeLatexReport(setting.value)); });
+  lines.push("\\end{description}", "\\section{Dataset Filters}", "\\begin{longtable}{lll}", "\\toprule", "Filter & Range / Value & State \\\\", "\\midrule", "\\endhead");
+  report.filters.forEach(function (filter) { lines.push(escapeLatexReport(filter.label) + " & " + escapeLatexReport(filter.value) + " & " + (filter.active ? "Active" : "Full range") + " \\\\"); });
+  lines.push("\\bottomrule", "\\end{longtable}", "\\section{Final Dataset Selection}");
+  var columnSpec = "r" + report.columns.map(function (column) { return column.numeric ? "r" : "l"; }).join("");
+  lines.push("\\begin{longtable}{" + columnSpec + "}", "\\toprule", "\\# & " + report.columns.map(function (column) { return escapeLatexReport(column.label); }).join(" & ") + " \\\\", "\\midrule", "\\endhead");
+  report.rows.forEach(function (dataset, index) { lines.push((index + 1) + " & " + report.columns.map(function (column) { return escapeLatexReport(column.value(dataset)); }).join(" & ") + " \\\\"); });
+  lines.push("\\bottomrule", "\\end{longtable}", "\\section{Algorithm Performance Space}");
+  if (report.apsPoints.length > 0) {
+    lines.push("\\begin{longtable}{llrr}", "\\toprule", "Dataset & Status & APS Dimension 1 & APS Dimension 2 \\\\", "\\midrule", "\\endhead");
+    report.apsPoints.forEach(function (point) { lines.push(escapeLatexReport(point.name) + " & " + point.status + " & " + point.x.toFixed(6) + " & " + point.y.toFixed(6) + " \\\\"); });
+    lines.push("\\bottomrule", "\\end{longtable}");
+  } else {
+    lines.push("APS coordinates were not available when this report was generated.");
+  }
+  lines.push("\\vfill", "\\noindent Generated by FINALLY v" + escapeLatexReport(report.version) + ", \\url{" + report.source + "}.", "\\end{document}");
+  return lines.join("\n");
+}
+
+function escapeBibValue(value) {
+  return String(value ?? "").replace(/[{}]/g, "").replace(/\s+/g, " ").trim();
+}
+
+function exportAsBibtex() {
+  var report = buildExportReport();
+  if (report.rows.length === 0) return "% No datasets to export.";
+  var lines = [];
+  var reportNote = report.settings.map(function (setting) { return setting.label + ": " + setting.value; }).join("; ");
+  lines.push("@misc{finally_recommendation_" + report.generatedIso.slice(0, 10).replace(/-/g, "") + ",");
+  lines.push("  title        = {" + escapeBibValue(report.title) + "},");
+  lines.push("  author       = {{FINALLY}},");
+  lines.push("  year         = {" + report.generatedIso.slice(0, 4) + "},");
+  lines.push("  howpublished = {\\url{" + report.source + "}},");
+  lines.push("  note         = {" + escapeBibValue(reportNote) + "},");
+  lines.push("  annote       = {Candidate pool: " + escapeBibValue(report.poolDatasets.map(function (dataset) { return dataset.name; }).join(", ")) + "}");
+  lines.push("}", "");
+  report.rows.forEach(function (dataset, index) {
+    var key = (dataset.name || "dataset").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+    var visibleDetails = report.columns.map(function (column) { return column.label + ": " + column.value(dataset); }).join("; ");
+    lines.push("@misc{finally_" + key + "_" + (index + 1) + ",");
+    lines.push("  title        = {" + escapeBibValue(dataset.name || "Untitled Dataset") + "},");
+    lines.push("  author       = {{Dataset Provider}},");
+    lines.push("  howpublished = {\\url{" + report.source + "}},");
+    lines.push("  keywords     = {recommender systems, dataset, " + (requiredDatasetIds.includes(dataset.id) ? "required" : "recommended") + "},");
+    lines.push("  note         = {" + escapeBibValue(visibleDetails) + "}");
+    lines.push("}", "");
+  });
+  return lines.join("\n");
 }
 
 var metadataRangeFields = [
@@ -144,9 +588,12 @@ export async function initialize(queryOptions) {
   initializeSettingsFromQuery(queryOptions);
   initializeCandidateDatasetFilter(queryOptions);
   initializeRequiredDatasetFilter(queryOptions);
+  loadResultTablePreferences();
+  initializeResultColumnControls();
   initializeEvents();
 
   applyDatasetFilter();
+  renderResults();
 }
 
 function mapElements() {
@@ -173,6 +620,24 @@ function mapElements() {
   loadingElement = document.getElementById("recommend-loading");
   resultsSummaryElement = document.getElementById("recommend-results-summary");
   resultsListElement = document.getElementById("recommend-results-list");
+  resultsHeadElement = document.getElementById("recommend-results-head");
+  resultsEmptyElement = document.getElementById("recommend-results-empty");
+  resultsTableElement = document.getElementById("recommend-results-table");
+  resultColumnOptionsElement = document.getElementById("recommend-column-options");
+  resultSortStatusElement = document.getElementById("recommend-sort-status");
+  exportButtonElement = document.getElementById("recommend-export-btn");
+  apsPreviewCanvasElement = document.getElementById("recommend-aps-chart");
+  apsPreviewEmptyElement = document.getElementById("recommend-aps-empty");
+  apsPreviewMetaElement = document.getElementById("recommend-aps-meta");
+  apsPreviewNoteElement = document.getElementById("recommend-aps-note");
+  apsZoomOutButtonElement = document.getElementById("recommend-aps-zoom-out");
+  apsZoomInButtonElement = document.getElementById("recommend-aps-zoom-in");
+  apsResetButtonElement = document.getElementById("recommend-aps-reset");
+  apsApplyRangeButtonElement = document.getElementById("recommend-aps-apply-range");
+  apsXMinInputElement = document.getElementById("recommend-aps-x-min");
+  apsXMaxInputElement = document.getElementById("recommend-aps-x-max");
+  apsYMinInputElement = document.getElementById("recommend-aps-y-min");
+  apsYMaxInputElement = document.getElementById("recommend-aps-y-max");
 
   methodSelectElement = document.getElementById("recommend-method");
   metricSelectElement = document.getElementById("recommend-metric");
@@ -431,6 +896,7 @@ function initializeRequiredDatasetFilter(queryOptions) {
 
 function initializeEvents() {
   var _exportedImageCanvas = null;
+  var _currentExportType = null;
 
   if (generateButtonElement) {
     generateButtonElement.addEventListener("click", generateRecommendation);
@@ -507,7 +973,7 @@ function initializeEvents() {
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
-          a.download = "aps-dataset-recommendation-v" + versionNumber + ".png";
+          a.download = "finally-dataset-recommendation-v" + versionNumber + ".png";
           document.body.appendChild(a);
           a.click();
           setTimeout(function () {
@@ -516,11 +982,18 @@ function initializeEvents() {
           }, 100);
         }, "image/png");
       } else if (exportTextarea && exportTextarea.style.display !== "none") {
-        const blob = new Blob([exportTextarea.value], { type: "text/plain" });
+        var exportOptions = {
+          markdown: { extension: "md", mime: "text/markdown" },
+          html: { extension: "html", mime: "text/html" },
+          latex: { extension: "tex", mime: "application/x-tex" },
+          bibtex: { extension: "bib", mime: "application/x-bibtex" },
+        };
+        var selectedOption = exportOptions[_currentExportType] || { extension: "txt", mime: "text/plain" };
+        const blob = new Blob([exportTextarea.value], { type: selectedOption.mime + ";charset=utf-8" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "aps-dataset-export.txt";
+        a.download = "finally-dataset-recommendation-v" + versionNumber + "." + selectedOption.extension;
         document.body.appendChild(a);
         a.click();
         setTimeout(() => {
@@ -532,7 +1005,7 @@ function initializeEvents() {
   }
 
   // Render recommendation results as a canvas image
-  function renderRecommendationImage() {
+  function renderRecommendationImageLegacy() {
     const finalDatasets = getFinalDatasets();
     if (finalDatasets.length === 0) return null;
 
@@ -700,6 +1173,7 @@ function initializeEvents() {
     const exportTextarea = document.getElementById("export-textarea");
     const exportModalLabel = document.getElementById("exportModalLabel");
     if (!exportModal) return;
+    _currentExportType = type;
 
     // Set dynamic title
     var titleMap = {
@@ -765,7 +1239,7 @@ function initializeEvents() {
   }
 
   // Text export functions
-  function exportAsMarkdown() {
+  function exportAsMarkdownLegacy() {
     var rows = getFinalDatasets();
     if (rows.length === 0) return "No datasets to export.";
     var lines = [];
@@ -787,7 +1261,7 @@ function initializeEvents() {
     return lines.join("\n");
   }
 
-  function exportAsHtml() {
+  function exportAsHtmlLegacy() {
     var rows = getFinalDatasets();
     if (rows.length === 0) return "<p>No datasets to export.</p>";
     var h = [];
@@ -809,7 +1283,7 @@ function initializeEvents() {
     return h.join("\n");
   }
 
-  function exportAsLatex() {
+  function exportAsLatexLegacy() {
     var rows = getFinalDatasets();
     if (rows.length === 0) return "% No datasets to export.";
     var lines = [];
@@ -836,7 +1310,7 @@ function initializeEvents() {
     return lines.join("\n");
   }
 
-  function exportAsBibtex() {
+  function exportAsBibtexLegacy() {
     var rows = getFinalDatasets();
     if (rows.length === 0) return "% No datasets to export.";
     var lines = [];
@@ -866,6 +1340,46 @@ function initializeEvents() {
   }
   if (targetCountElement) {
     targetCountElement.addEventListener("change", applyDatasetFilter);
+  }
+  [metricSelectElement, kValueSelectElement].forEach(function (element) {
+    if (!element) return;
+    element.addEventListener("change", function () {
+      if (finalDatasetIds.length > 0) updateApsPreview();
+    });
+  });
+  if (apsZoomOutButtonElement) {
+    apsZoomOutButtonElement.addEventListener("click", function () { zoomApsPreview(1.38); });
+  }
+  if (apsZoomInButtonElement) {
+    apsZoomInButtonElement.addEventListener("click", function () { zoomApsPreview(0.72); });
+  }
+  if (apsResetButtonElement) {
+    apsResetButtonElement.addEventListener("click", resetApsAxisView);
+  }
+  if (apsApplyRangeButtonElement) {
+    apsApplyRangeButtonElement.addEventListener("click", applyApsAxisInputs);
+  }
+  [apsXMinInputElement, apsXMaxInputElement, apsYMinInputElement, apsYMaxInputElement].forEach(function (input) {
+    if (!input) return;
+    input.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        applyApsAxisInputs();
+      }
+    });
+  });
+  if (apsPreviewCanvasElement) {
+    apsPreviewCanvasElement.addEventListener("dblclick", resetApsAxisView);
+  }
+  if (!apsPreviewResizeHandler) {
+    apsPreviewResizeHandler = function () {
+      clearTimeout(apsPreviewResizeTimer);
+      if (!apsPreviewIsFitted) return;
+      apsPreviewResizeTimer = setTimeout(function () {
+        if (apsPreviewIsFitted) fitApsPreviewToPoints(true);
+      }, 160);
+    };
+    window.addEventListener("resize", apsPreviewResizeHandler);
   }
 
   if (requiredInputElement) {
@@ -1210,6 +1724,7 @@ function generateRecommendation() {
 
     var targetCount = getValidatedTargetCount();
     var candidatePool = getCandidatePool();
+    lastRecommendationPoolIds = candidatePool.map(function (dataset) { return dataset.id; });
     var warningText = "";
 
     if (targetCount < requiredUnique.length) {
@@ -1323,7 +1838,7 @@ function generateRecommendation() {
   }, 30);
 }
 
-function renderResults() {
+function renderResultsLegacy() {
   if (!resultsListElement || !resultsSummaryElement) {
     return;
   }
@@ -1400,6 +1915,739 @@ function renderResults() {
   }
 }
 
+function loadResultTablePreferences() {
+  try {
+    var stored = JSON.parse(sessionStorage.getItem(resultTablePreferenceKey) || "null");
+    if (!stored) return;
+
+    var optionalKeys = resultColumnDefinitions
+      .filter(function (column) { return !column.fixed; })
+      .map(function (column) { return column.key; });
+
+    if (Array.isArray(stored.visibleColumns)) {
+      visibleResultColumnKeys = stored.visibleColumns.filter(function (key) {
+        return optionalKeys.includes(key);
+      });
+    }
+    if (Array.isArray(stored.order)) {
+      resultOrderIds = stored.order
+        .map(function (id) { return Number(id); })
+        .filter(function (id) { return Number.isFinite(id); });
+    }
+    if (resultColumnDefinitions.some(function (column) { return column.key === stored.sortKey; })) {
+      resultSortKey = stored.sortKey;
+      resultSortDirection = stored.sortDirection === "desc" ? "desc" : "asc";
+    }
+  } catch (error) {
+    visibleResultColumnKeys = defaultResultColumnKeys.slice();
+  }
+}
+
+function saveResultTablePreferences() {
+  try {
+    sessionStorage.setItem(resultTablePreferenceKey, JSON.stringify({
+      visibleColumns: visibleResultColumnKeys,
+      order: resultOrderIds,
+      sortKey: resultSortKey,
+      sortDirection: resultSortDirection,
+    }));
+  } catch (error) {
+    // The table remains fully usable when browser storage is unavailable.
+  }
+}
+
+function initializeResultColumnControls() {
+  if (!resultColumnOptionsElement) return;
+  resultColumnOptionsElement.innerHTML = "";
+
+  resultColumnDefinitions
+    .filter(function (column) { return !column.fixed; })
+    .forEach(function (column) {
+      var label = document.createElement("label");
+      label.className = "recommend-column-option";
+
+      var checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.value = column.key;
+      checkbox.checked = visibleResultColumnKeys.includes(column.key);
+      checkbox.addEventListener("change", function () {
+        if (checkbox.checked) {
+          visibleResultColumnKeys = Array.from(new Set(visibleResultColumnKeys.concat(column.key)));
+        } else {
+          visibleResultColumnKeys = visibleResultColumnKeys.filter(function (key) { return key !== column.key; });
+        }
+        saveResultTablePreferences();
+        renderResults();
+      });
+
+      var text = document.createElement("span");
+      text.textContent = column.label;
+      label.appendChild(checkbox);
+      label.appendChild(text);
+      resultColumnOptionsElement.appendChild(label);
+    });
+
+  var resetButton = document.getElementById("recommend-columns-reset");
+  if (resetButton) {
+    resetButton.onclick = function () {
+      visibleResultColumnKeys = defaultResultColumnKeys.slice();
+      resultSortKey = null;
+      resultSortDirection = null;
+      saveResultTablePreferences();
+      initializeResultColumnControls();
+      renderResults();
+    };
+  }
+}
+
+function getVisibleResultColumns() {
+  return resultColumnDefinitions.filter(function (column) {
+    return column.fixed || visibleResultColumnKeys.includes(column.key);
+  });
+}
+
+function getResultColumn(key) {
+  return resultColumnDefinitions.find(function (column) { return column.key === key; });
+}
+
+function reconcileResultOrder() {
+  var validIds = finalDatasetIds.slice();
+  var keptIds = resultOrderIds.filter(function (id) { return validIds.includes(id); });
+  var newIds = validIds.filter(function (id) { return !keptIds.includes(id); });
+  resultOrderIds = keptIds.concat(newIds);
+}
+
+function getConfiguredFinalDatasets() {
+  reconcileResultOrder();
+  var rows = getFinalDatasets();
+
+  if (resultSortKey) {
+    var column = getResultColumn(resultSortKey);
+    var direction = resultSortDirection === "desc" ? -1 : 1;
+    rows.sort(function (left, right) {
+      var leftValue = column.raw ? column.raw(left) : column.value(left);
+      var rightValue = column.raw ? column.raw(right) : column.value(right);
+      var leftMissing = leftValue === null || leftValue === undefined || (column.numeric && !Number.isFinite(leftValue));
+      var rightMissing = rightValue === null || rightValue === undefined || (column.numeric && !Number.isFinite(rightValue));
+      if (leftMissing && rightMissing) return 0;
+      if (leftMissing) return 1;
+      if (rightMissing) return -1;
+      if (column.numeric) return (leftValue - rightValue) * direction;
+      return String(leftValue).localeCompare(String(rightValue), undefined, { numeric: true, sensitivity: "base" }) * direction;
+    });
+    return rows;
+  }
+
+  var orderIndex = new Map(resultOrderIds.map(function (id, index) { return [id, index]; }));
+  rows.sort(function (left, right) {
+    return (orderIndex.get(left.id) ?? Number.MAX_SAFE_INTEGER) - (orderIndex.get(right.id) ?? Number.MAX_SAFE_INTEGER);
+  });
+  return rows;
+}
+
+function updateResultSortStatus() {
+  if (!resultSortStatusElement) return;
+  if (!resultSortKey) {
+    resultSortStatusElement.textContent = "Custom Order";
+    return;
+  }
+  var column = getResultColumn(resultSortKey);
+  resultSortStatusElement.textContent = "Sorted by " + column.label + (resultSortDirection === "desc" ? " \u2193" : " \u2191");
+}
+
+function setResultSort(columnKey) {
+  if (resultSortKey !== columnKey) {
+    resultSortKey = columnKey;
+    resultSortDirection = "asc";
+  } else if (resultSortDirection === "asc") {
+    resultSortDirection = "desc";
+  } else {
+    resultSortKey = null;
+    resultSortDirection = null;
+  }
+  saveResultTablePreferences();
+  renderResults();
+}
+
+function renderResultTableHead(columns) {
+  if (!resultsHeadElement) return;
+  resultsHeadElement.innerHTML = "";
+  var row = document.createElement("tr");
+
+  var dragHeader = document.createElement("th");
+  dragHeader.scope = "col";
+  dragHeader.setAttribute("aria-label", "Reorder");
+  row.appendChild(dragHeader);
+
+  var indexHeader = document.createElement("th");
+  indexHeader.scope = "col";
+  indexHeader.textContent = "#";
+  row.appendChild(indexHeader);
+
+  columns.forEach(function (column) {
+    var th = document.createElement("th");
+    th.scope = "col";
+    th.setAttribute("aria-sort", resultSortKey === column.key
+      ? (resultSortDirection === "desc" ? "descending" : "ascending")
+      : "none");
+
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "recommend-sort-button" + (resultSortKey === column.key ? " is-active" : "");
+    button.setAttribute("aria-label", "Sort by " + column.label);
+    button.textContent = column.label;
+
+    var icon = document.createElement("i");
+    icon.className = resultSortKey === column.key
+      ? "fa-solid " + (resultSortDirection === "desc" ? "fa-arrow-down" : "fa-arrow-up")
+      : "fa-solid fa-sort";
+    icon.setAttribute("aria-hidden", "true");
+    button.appendChild(icon);
+    button.addEventListener("click", function () { setResultSort(column.key); });
+    th.appendChild(button);
+    row.appendChild(th);
+  });
+  resultsHeadElement.appendChild(row);
+}
+
+function reorderResult(draggedId, targetId, placeAfter) {
+  var orderedIds = getConfiguredFinalDatasets().map(function (dataset) { return dataset.id; });
+  orderedIds = orderedIds.filter(function (id) { return id !== draggedId; });
+  var targetIndex = orderedIds.indexOf(targetId);
+  if (targetIndex < 0) return;
+  orderedIds.splice(targetIndex + (placeAfter ? 1 : 0), 0, draggedId);
+  resultOrderIds = orderedIds;
+  resultSortKey = null;
+  resultSortDirection = null;
+  saveResultTablePreferences();
+  renderResults();
+}
+
+function moveResultByKeyboard(datasetId, direction) {
+  var orderedIds = getConfiguredFinalDatasets().map(function (dataset) { return dataset.id; });
+  var currentIndex = orderedIds.indexOf(datasetId);
+  var nextIndex = currentIndex + direction;
+  if (currentIndex < 0 || nextIndex < 0 || nextIndex >= orderedIds.length) return;
+  var temporary = orderedIds[currentIndex];
+  orderedIds[currentIndex] = orderedIds[nextIndex];
+  orderedIds[nextIndex] = temporary;
+  resultOrderIds = orderedIds;
+  resultSortKey = null;
+  resultSortDirection = null;
+  saveResultTablePreferences();
+  renderResults();
+  requestAnimationFrame(function () {
+    document.querySelector('[data-result-id="' + datasetId + '"] .recommend-drag-handle')?.focus();
+  });
+}
+
+function clearDragTargets() {
+  if (!resultsListElement) return;
+  resultsListElement.querySelectorAll("tr").forEach(function (row) {
+    row.classList.remove("is-drag-target");
+  });
+}
+
+function clearDragState() {
+  if (!resultsListElement) return;
+  resultsListElement.querySelectorAll("tr").forEach(function (row) {
+    row.classList.remove("is-dragging", "is-drag-target");
+  });
+}
+
+function createResultRow(dataset, datasetIndex, columns) {
+  var isRequired = requiredDatasetIds.includes(dataset.id);
+  var row = document.createElement("tr");
+  row.dataset.resultId = String(dataset.id);
+  row.draggable = true;
+  row.className = isRequired ? "is-required" : "is-recommended";
+
+  var dragCell = document.createElement("td");
+  var dragButton = document.createElement("button");
+  dragButton.type = "button";
+  dragButton.className = "recommend-drag-handle";
+  dragButton.innerHTML = '<i class="fa-solid fa-grip-vertical" aria-hidden="true"></i>';
+  dragButton.setAttribute("aria-label", "Move " + dataset.name + ". Use the up and down arrow keys to reorder.");
+  dragButton.addEventListener("keydown", function (event) {
+    if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+      event.preventDefault();
+      moveResultByKeyboard(dataset.id, event.key === "ArrowUp" ? -1 : 1);
+    }
+  });
+  dragCell.appendChild(dragButton);
+  row.appendChild(dragCell);
+
+  var indexCell = document.createElement("td");
+  indexCell.textContent = String(datasetIndex + 1);
+  row.appendChild(indexCell);
+
+  columns.forEach(function (column) {
+    var cell = document.createElement("td");
+    var value = column.value(dataset);
+    if (column.key === "name") {
+      cell.className = "recommend-dataset-cell";
+      cell.textContent = value;
+      cell.title = value;
+    } else if (column.key === "status") {
+      var badge = document.createElement("span");
+      badge.className = "recommend-result-status" + (isRequired ? " is-required" : "");
+      badge.textContent = value;
+      cell.appendChild(badge);
+    } else {
+      cell.textContent = value;
+    }
+    row.appendChild(cell);
+  });
+
+  row.addEventListener("dragstart", function (event) {
+    draggedResultId = dataset.id;
+    row.classList.add("is-dragging");
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", String(dataset.id));
+  });
+  row.addEventListener("dragover", function (event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    clearDragTargets();
+    row.classList.add("is-drag-target");
+  });
+  row.addEventListener("drop", function (event) {
+    event.preventDefault();
+    var sourceId = Number(event.dataTransfer.getData("text/plain") || draggedResultId);
+    var bounds = row.getBoundingClientRect();
+    var placeAfter = event.clientY > bounds.top + bounds.height / 2;
+    clearDragState();
+    if (Number.isFinite(sourceId) && sourceId !== dataset.id) reorderResult(sourceId, dataset.id, placeAfter);
+  });
+  row.addEventListener("dragend", function () {
+    draggedResultId = null;
+    clearDragState();
+  });
+  row.addEventListener("mouseenter", function () {
+    highlightApsPoint(dataset.id);
+    highlightResultRow(dataset.id, false);
+  });
+  row.addEventListener("mouseleave", function () {
+    clearApsHighlight();
+    highlightResultRow(null, false);
+  });
+  return row;
+}
+
+function renderResults() {
+  if (!resultsListElement || !resultsSummaryElement) return;
+
+  var finalDatasets = getConfiguredFinalDatasets();
+  var columns = getVisibleResultColumns();
+  resultsListElement.innerHTML = "";
+  renderResultTableHead(columns);
+  updateResultSortStatus();
+
+  if (resultsTableElement) {
+    resultsTableElement.style.minWidth = Math.max(610, 76 + 205 + (columns.length - 1) * 112) + "px";
+  }
+
+  if (finalDatasets.length === 0) {
+    resultsSummaryElement.textContent = "No datasets selected yet.";
+    if (resultsEmptyElement) resultsEmptyElement.style.display = "block";
+    if (openApsButtonElement) openApsButtonElement.disabled = true;
+    if (exportButtonElement) exportButtonElement.disabled = true;
+    resetApsPreview("Generate a recommendation to display the dataset pool.");
+    return;
+  }
+
+  if (resultsEmptyElement) resultsEmptyElement.style.display = "none";
+  resultsSummaryElement.textContent = "Final: " + finalDatasets.length + " | Required: " + requiredDatasetIds.length + " | Recommended: " + recommendedDatasetIds.length;
+  finalDatasets.forEach(function (dataset, datasetIndex) {
+    resultsListElement.appendChild(createResultRow(dataset, datasetIndex, columns));
+  });
+
+  if (openApsButtonElement) openApsButtonElement.disabled = false;
+  if (exportButtonElement) exportButtonElement.disabled = false;
+  updateApsPreview();
+}
+
+function getApsControlElements() {
+  return [
+    apsZoomOutButtonElement,
+    apsZoomInButtonElement,
+    apsResetButtonElement,
+    apsApplyRangeButtonElement,
+    apsXMinInputElement,
+    apsXMaxInputElement,
+    apsYMinInputElement,
+    apsYMaxInputElement,
+  ].filter(function (element) { return !!element; });
+}
+
+function setApsControlsEnabled(enabled) {
+  getApsControlElements().forEach(function (element) { element.disabled = !enabled; });
+  if (!enabled) {
+    [apsXMinInputElement, apsXMaxInputElement, apsYMinInputElement, apsYMaxInputElement].forEach(function (input) {
+      if (!input) return;
+      input.value = "";
+      input.setCustomValidity("");
+    });
+  }
+}
+
+function calculateApsDefaultBounds(points, chartWidth, chartHeight) {
+  if (!points || points.length === 0) return null;
+  var xValues = points.map(function (point) { return point.x; });
+  var yValues = points.map(function (point) { return point.y; });
+  var minX = Math.min.apply(null, xValues);
+  var maxX = Math.max.apply(null, xValues);
+  var minY = Math.min.apply(null, yValues);
+  var maxY = Math.max.apply(null, yValues);
+  var centerX = (minX + maxX) / 2;
+  var centerY = (minY + maxY) / 2;
+  var rawXSpan = maxX - minX;
+  var rawYSpan = maxY - minY;
+  var magnitudeSpan = Math.max(Math.abs(centerX), Math.abs(centerY)) * 0.08;
+  var referenceSpan = Math.max(rawXSpan, rawYSpan, magnitudeSpan, 0.01);
+  var paddedXSpan = Math.max(rawXSpan * 1.18, referenceSpan * 0.08);
+  var paddedYSpan = Math.max(rawYSpan * 1.18, referenceSpan * 0.08);
+  var safeWidth = Math.max(Number(chartWidth) || 0, 1);
+  var safeHeight = Math.max(Number(chartHeight) || 0, 1);
+  var unitsPerPixel = Math.max(paddedXSpan / safeWidth, paddedYSpan / safeHeight);
+  var xSpan = unitsPerPixel * safeWidth;
+  var ySpan = unitsPerPixel * safeHeight;
+
+  return {
+    xMin: centerX - xSpan / 2,
+    xMax: centerX + xSpan / 2,
+    yMin: centerY - ySpan / 2,
+    yMax: centerY + ySpan / 2,
+  };
+}
+
+function getApsChartAreaSize() {
+  if (apsPreviewChart?.chartArea) {
+    return {
+      width: Math.max(apsPreviewChart.chartArea.width, 1),
+      height: Math.max(apsPreviewChart.chartArea.height, 1),
+    };
+  }
+  return {
+    width: Math.max((apsPreviewCanvasElement?.clientWidth || 400) - 80, 1),
+    height: Math.max((apsPreviewCanvasElement?.clientHeight || 320) - 70, 1),
+  };
+}
+
+function formatApsAxisValue(value) {
+  if (!Number.isFinite(Number(value))) return "";
+  return String(Number(Number(value).toPrecision(7)));
+}
+
+function writeApsAxisInputs(bounds) {
+  if (!bounds) return;
+  if (apsXMinInputElement) apsXMinInputElement.value = formatApsAxisValue(bounds.xMin);
+  if (apsXMaxInputElement) apsXMaxInputElement.value = formatApsAxisValue(bounds.xMax);
+  if (apsYMinInputElement) apsYMinInputElement.value = formatApsAxisValue(bounds.yMin);
+  if (apsYMaxInputElement) apsYMaxInputElement.value = formatApsAxisValue(bounds.yMax);
+}
+
+function getCurrentApsBounds(chart) {
+  var activeChart = chart || apsPreviewChart;
+  if (!activeChart?.scales?.x || !activeChart?.scales?.y) return null;
+  return {
+    xMin: activeChart.scales.x.min,
+    xMax: activeChart.scales.x.max,
+    yMin: activeChart.scales.y.min,
+    yMax: activeChart.scales.y.max,
+  };
+}
+
+function syncApsAxisInputs(chart) {
+  writeApsAxisInputs(getCurrentApsBounds(chart));
+}
+
+function setApsChartBounds(bounds, updateMode) {
+  if (!apsPreviewChart || !bounds) return;
+  apsPreviewChart.options.scales.x.min = bounds.xMin;
+  apsPreviewChart.options.scales.x.max = bounds.xMax;
+  apsPreviewChart.options.scales.y.min = bounds.yMin;
+  apsPreviewChart.options.scales.y.max = bounds.yMax;
+  writeApsAxisInputs(bounds);
+  apsPreviewChart.update(updateMode || "none");
+}
+
+function fitApsPreviewToPoints(withoutAnimation) {
+  if (!apsPreviewChart || apsPreviewPoints.length === 0) return;
+  var area = getApsChartAreaSize();
+  apsPreviewDefaultBounds = calculateApsDefaultBounds(apsPreviewPoints, area.width, area.height);
+  apsPreviewIsFitted = true;
+  setApsChartBounds(apsPreviewDefaultBounds, withoutAnimation ? "none" : undefined);
+}
+
+function resetApsAxisView() {
+  fitApsPreviewToPoints(false);
+}
+
+function zoomApsPreview(factor) {
+  var bounds = getCurrentApsBounds();
+  if (!bounds || !Number.isFinite(factor) || factor <= 0) return;
+  var centerX = (bounds.xMin + bounds.xMax) / 2;
+  var centerY = (bounds.yMin + bounds.yMax) / 2;
+  var halfWidth = (bounds.xMax - bounds.xMin) * factor / 2;
+  var halfHeight = (bounds.yMax - bounds.yMin) * factor / 2;
+  apsPreviewIsFitted = false;
+  setApsChartBounds({
+    xMin: centerX - halfWidth,
+    xMax: centerX + halfWidth,
+    yMin: centerY - halfHeight,
+    yMax: centerY + halfHeight,
+  }, "none");
+}
+
+function applyApsAxisInputs() {
+  var inputs = [apsXMinInputElement, apsXMaxInputElement, apsYMinInputElement, apsYMaxInputElement];
+  if (!apsPreviewChart || inputs.some(function (input) { return !input; })) return;
+  inputs.forEach(function (input) { input.setCustomValidity(""); });
+  var values = inputs.map(function (input) { return Number(input.value); });
+  var invalidInputIndex = values.findIndex(function (value, index) {
+    return inputs[index].value.trim() === "" || !Number.isFinite(value);
+  });
+  if (invalidInputIndex >= 0) {
+    inputs[invalidInputIndex].setCustomValidity("Enter a valid number for every axis limit.");
+    inputs[invalidInputIndex].reportValidity();
+    return;
+  }
+  if (values[0] >= values[1]) {
+    apsXMaxInputElement.setCustomValidity("X Max must be greater than X Min.");
+    apsXMaxInputElement.reportValidity();
+    return;
+  }
+  if (values[2] >= values[3]) {
+    apsYMaxInputElement.setCustomValidity("Y Max must be greater than Y Min.");
+    apsYMaxInputElement.reportValidity();
+    return;
+  }
+  apsPreviewIsFitted = false;
+  setApsChartBounds({ xMin: values[0], xMax: values[1], yMin: values[2], yMax: values[3] }, "none");
+}
+
+function resetApsPreview(message) {
+  apsPreviewRequestId += 1;
+  if (apsPreviewChart) {
+    apsPreviewChart.destroy();
+    apsPreviewChart = null;
+  }
+  apsPreviewPoints = [];
+  apsPreviewDefaultBounds = null;
+  apsPreviewIsFitted = true;
+  setApsControlsEnabled(false);
+  if (apsPreviewCanvasElement) apsPreviewCanvasElement.style.display = "none";
+  if (apsPreviewEmptyElement) {
+    apsPreviewEmptyElement.style.display = "flex";
+    var text = apsPreviewEmptyElement.querySelector("span");
+    if (text) text.textContent = message;
+  }
+  if (apsPreviewMetaElement) apsPreviewMetaElement.textContent = "Waiting for recommendation";
+  if (apsPreviewNoteElement) apsPreviewNoteElement.textContent = "The preview uses the APS metric and K-value selected in Step 2.";
+}
+
+async function updateApsPreview() {
+  if (!apsPreviewCanvasElement || finalDatasetIds.length === 0) return;
+  var requestId = ++apsPreviewRequestId;
+  var poolIds = lastRecommendationPoolIds.length > 0
+    ? lastRecommendationPoolIds.slice()
+    : getCandidatePool().map(function (dataset) { return dataset.id; });
+  var previewIds = Array.from(new Set(poolIds.concat(requiredDatasetIds)));
+
+  if (apsPreviewEmptyElement) {
+    apsPreviewEmptyElement.style.display = "flex";
+    var loadingText = apsPreviewEmptyElement.querySelector("span");
+    if (loadingText) loadingText.textContent = "Loading the Algorithm Performance Space\u2026";
+  }
+  apsPreviewCanvasElement.style.display = "none";
+  setApsControlsEnabled(false);
+  if (apsPreviewMetaElement) apsPreviewMetaElement.textContent = poolIds.length + " Pool Datasets";
+
+  var pcaResults = await ApiService.getPcaResults();
+  if (requestId !== apsPreviewRequestId) return;
+  if (!pcaResults || typeof Chart === "undefined") {
+    resetApsPreview("The APS preview could not be loaded.");
+    return;
+  }
+
+  var metric = metricSelectElement?.value || "ndcg";
+  var kValue = kValueSelectElement?.value || "10";
+  var pcaKey = kValueKeyMap[kValue] || kValue;
+  var points = pcaResults
+    .filter(function (result) { return previewIds.includes(Number(result.datasetId)); })
+    .map(function (result) {
+      var coordinates = result?.[metric]?.[pcaKey];
+      var dataset = datasets.find(function (item) { return item.id === Number(result.datasetId); });
+      if (!dataset || !coordinates || !Number.isFinite(Number(coordinates.x)) || !Number.isFinite(Number(coordinates.y))) return null;
+      var id = Number(result.datasetId);
+      var status = requiredDatasetIds.includes(id)
+        ? "Required"
+        : recommendedDatasetIds.includes(id) ? "Recommended" : "Pool";
+      return { id: id, x: Number(coordinates.x), y: Number(coordinates.y), name: dataset.name, status: status };
+    })
+    .filter(function (point) { return !!point; });
+
+  if (points.length === 0) {
+    resetApsPreview("No APS coordinates are available for the selected metric and K-value.");
+    return;
+  }
+
+  if (apsPreviewChart) {
+    apsPreviewChart.destroy();
+    apsPreviewChart = null;
+  }
+  var groupedPoints = {
+    Pool: points.filter(function (point) { return point.status === "Pool"; }),
+    Recommended: points.filter(function (point) { return point.status === "Recommended"; }),
+    Required: points.filter(function (point) { return point.status === "Required"; }),
+  };
+  var styles = {
+    Pool: { background: "#aeb9c9", border: "#7d899b", radius: 4.5 },
+    Recommended: { background: "#1f9d62", border: "#126d43", radius: 7 },
+    Required: { background: "#315fd1", border: "#1d429d", radius: 7 },
+  };
+
+  apsPreviewCanvasElement.style.display = "block";
+  if (apsPreviewEmptyElement) apsPreviewEmptyElement.style.display = "none";
+  apsPreviewPoints = points.slice();
+  var initialArea = getApsChartAreaSize();
+  apsPreviewDefaultBounds = calculateApsDefaultBounds(points, initialArea.width, initialArea.height);
+  apsPreviewIsFitted = true;
+  apsPreviewChart = new Chart(apsPreviewCanvasElement, {
+    type: "scatter",
+    data: {
+      datasets: ["Pool", "Recommended", "Required"].map(function (status) {
+        return {
+          label: status,
+          data: groupedPoints[status],
+          parsing: false,
+          pointRadius: styles[status].radius,
+          pointHoverRadius: styles[status].radius + 2,
+          pointHitRadius: 9,
+          pointBackgroundColor: styles[status].background,
+          pointBorderColor: styles[status].border,
+          pointBorderWidth: status === "Pool" ? 1 : 2,
+        };
+      }),
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 260 },
+      interaction: { mode: "nearest", intersect: true },
+      onClick: function (event, elements, chart) {
+        if (!elements.length) return;
+        var point = chart.data.datasets[elements[0].datasetIndex].data[elements[0].index];
+        highlightResultRow(point.id, true);
+      },
+      onHover: function (event, elements, chart) {
+        chart.canvas.style.cursor = elements.length ? "pointer" : "default";
+        if (elements.length) {
+          var point = chart.data.datasets[elements[0].datasetIndex].data[elements[0].index];
+          highlightResultRow(point.id, false);
+        } else {
+          highlightResultRow(null, false);
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: function (contexts) { return contexts[0]?.raw?.name || "Dataset"; },
+            label: function (context) {
+              var point = context.raw;
+              return [point.status, "APS 1: " + point.x.toFixed(3), "APS 2: " + point.y.toFixed(3)];
+            },
+          },
+        },
+        zoom: {
+          pan: {
+            enabled: true,
+            mode: "xy",
+            modifierKey: "shift",
+            onPanComplete: function (context) {
+              apsPreviewIsFitted = false;
+              syncApsAxisInputs(context.chart);
+            },
+          },
+          zoom: {
+            wheel: { enabled: true },
+            pinch: { enabled: true },
+            mode: "xy",
+            onZoomComplete: function (context) {
+              apsPreviewIsFitted = false;
+              syncApsAxisInputs(context.chart);
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          min: apsPreviewDefaultBounds.xMin,
+          max: apsPreviewDefaultBounds.xMax,
+          title: { display: true, text: "APS Dimension 1", color: "#657289", font: { size: 10, weight: "600" } },
+          grid: { color: "rgba(124, 141, 169, 0.12)" },
+          ticks: { maxTicksLimit: 8, font: { size: 9 } },
+        },
+        y: {
+          min: apsPreviewDefaultBounds.yMin,
+          max: apsPreviewDefaultBounds.yMax,
+          title: { display: true, text: "APS Dimension 2", color: "#657289", font: { size: 10, weight: "600" } },
+          grid: { color: "rgba(124, 141, 169, 0.12)" },
+          ticks: { maxTicksLimit: 8, font: { size: 9 } },
+        },
+      },
+    },
+  });
+  setApsControlsEnabled(true);
+  fitApsPreviewToPoints(true);
+
+  var missingCount = previewIds.length - points.length;
+  if (apsPreviewMetaElement) apsPreviewMetaElement.textContent = poolIds.length + " Pool Datasets";
+  if (apsPreviewNoteElement) {
+    var metricLabel = metricSelectElement?.options[metricSelectElement.selectedIndex]?.text || metric.toUpperCase();
+    apsPreviewNoteElement.textContent = metricLabel + " @" + kValue
+      + (missingCount > 0 ? " \u00b7 " + missingCount + " dataset(s) without coordinates" : " \u00b7 All pool datasets displayed")
+      + " \u00b7 Scroll to zoom \u00b7 Shift + drag to pan \u00b7 Double-click to fit";
+  }
+}
+
+function highlightResultRow(datasetId, shouldScroll) {
+  if (!resultsListElement) return;
+  var selectedRow = null;
+  resultsListElement.querySelectorAll("tr").forEach(function (row) {
+    var isSelected = datasetId !== null && Number(row.dataset.resultId) === datasetId;
+    row.classList.toggle("is-chart-highlighted", isSelected);
+    if (isSelected) selectedRow = row;
+  });
+  if (selectedRow && shouldScroll) selectedRow.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function highlightApsPoint(datasetId) {
+  if (!apsPreviewChart) return;
+  var active = null;
+  apsPreviewChart.data.datasets.some(function (chartDataset, datasetIndex) {
+    var pointIndex = chartDataset.data.findIndex(function (point) { return point.id === datasetId; });
+    if (pointIndex >= 0) {
+      active = { datasetIndex: datasetIndex, index: pointIndex };
+      return true;
+    }
+    return false;
+  });
+  if (!active) return;
+  apsPreviewChart.setActiveElements([active]);
+  apsPreviewChart.tooltip?.setActiveElements([active], { x: 0, y: 0 });
+  apsPreviewChart.update("none");
+}
+
+function clearApsHighlight() {
+  if (!apsPreviewChart) return;
+  apsPreviewChart.setActiveElements([]);
+  apsPreviewChart.tooltip?.setActiveElements([], { x: 0, y: 0 });
+  apsPreviewChart.update("none");
+}
+
 function openRecommendationInAps() {
   if (finalDatasetIds.length === 0) {
     setStatus("Generate a recommendation first.", "warning");
@@ -1409,6 +2657,8 @@ function openRecommendationInAps() {
   const url = getQueryString({
     tab: "aps",
     datasets: finalDatasetIds.join(" "),
+    metric: metricSelectElement?.value || "ndcg",
+    k: kValueKeyMap[kValueSelectElement?.value || "10"] || "ten",
   });
 
   window.location.href = url;
@@ -1771,6 +3021,16 @@ function shuffleArray(array) {
 }
 
 export function dispose() {
+  apsPreviewRequestId += 1;
+  clearTimeout(apsPreviewResizeTimer);
+  if (apsPreviewResizeHandler) {
+    window.removeEventListener("resize", apsPreviewResizeHandler);
+    apsPreviewResizeHandler = null;
+  }
+  if (apsPreviewChart) {
+    apsPreviewChart.destroy();
+    apsPreviewChart = null;
+  }
   var sliderIds = ["slider-interactions"];
   metadataRangeFields.forEach(function (f) { sliderIds.push(f.sliderId); });
   sliderIds.forEach(function (id) {

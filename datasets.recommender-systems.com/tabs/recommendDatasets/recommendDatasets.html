@@ -243,16 +243,6 @@
         <button id="recommend-generate-btn" type="button" class="btn btn-primary recommend-primary-action"><i class="fa-solid fa-wand-magic-sparkles"></i> Generate Recommendation</button>
         <button id="recommend-open-aps-btn" type="button" class="btn btn-outline-primary" disabled><i class="fa-solid fa-chart-line"></i> Open in APS</button>
         <button id="recommend-share-btn" type="button" class="btn btn-outline-secondary"><i class="fa-solid fa-link"></i> Share</button>
-        <div class="btn-group">
-          <button id="recommend-export-btn" type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa-solid fa-file-export"></i> Export</button>
-          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="recommend-export-btn">
-            <li><a class="dropdown-item" href="#" id="export-image"><i class="fa-solid fa-image"></i> Export Image</a></li>
-            <li><a class="dropdown-item" href="#" id="export-markdown"><i class="fa-brands fa-markdown"></i> Export Markdown</a></li>
-            <li><a class="dropdown-item" href="#" id="export-html"><i class="fa-solid fa-code"></i> Export HTML</a></li>
-            <li><a class="dropdown-item" href="#" id="export-latex"><i class="fa-solid fa-square-root-variable"></i> Export LaTeX</a></li>
-            <li><a class="dropdown-item" href="#" id="export-bibtex"><i class="fa-solid fa-book"></i> Export BibTeX</a></li>
-          </ul>
-        </div>
       </div>
     </div>
   </section>
@@ -268,15 +258,92 @@
 
   <section class="recommend-section recommend-results" aria-labelledby="results-heading">
     <div class="recommend-section-heading recommend-results-heading">
-      <span class="recommend-step-icon recommend-step-icon-green"><i class="fa-solid fa-check"></i></span>
-      <div><span class="recommend-section-kicker">Step 3</span><h3 id="results-heading">Final Dataset Selection</h3><p id="recommend-results-summary">No datasets selected yet.</p></div>
+      <div class="recommend-results-title">
+        <span class="recommend-step-icon recommend-step-icon-green"><i class="fa-solid fa-check"></i></span>
+        <div><span class="recommend-section-kicker">Step 3</span><h3 id="results-heading">Final Dataset Selection</h3><p id="recommend-results-summary">No datasets selected yet.</p></div>
+      </div>
+      <div class="recommend-results-toolbar" aria-label="Result table actions">
+        <div class="dropdown" data-bs-auto-close="outside">
+          <button id="recommend-columns-btn" type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fa-solid fa-table-columns"></i> Columns
+          </button>
+          <div class="dropdown-menu dropdown-menu-end recommend-columns-menu" aria-labelledby="recommend-columns-btn">
+            <div class="recommend-columns-menu-heading"><strong>Visible Parameters</strong><small>Dataset and Status always remain visible.</small></div>
+            <div id="recommend-column-options" class="recommend-column-options"></div>
+            <div class="recommend-columns-menu-footer"><button id="recommend-columns-reset" type="button" class="btn btn-sm btn-link">Restore Defaults</button></div>
+          </div>
+        </div>
+        <div class="btn-group">
+          <button id="recommend-export-btn" type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" disabled><i class="fa-solid fa-file-export"></i> Export</button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="recommend-export-btn">
+            <li><a class="dropdown-item" href="#" id="export-image"><i class="fa-solid fa-image"></i> Export Image</a></li>
+            <li><a class="dropdown-item" href="#" id="export-markdown"><i class="fa-brands fa-markdown"></i> Export Markdown</a></li>
+            <li><a class="dropdown-item" href="#" id="export-html"><i class="fa-solid fa-code"></i> Export HTML</a></li>
+            <li><a class="dropdown-item" href="#" id="export-latex"><i class="fa-solid fa-square-root-variable"></i> Export LaTeX</a></li>
+            <li><a class="dropdown-item" href="#" id="export-bibtex"><i class="fa-solid fa-book"></i> Export BibTeX</a></li>
+          </ul>
+        </div>
+      </div>
     </div>
-    <ul id="recommend-results-list" class="recommend-results-list"></ul>
+
+    <div class="recommend-results-workspace">
+      <div class="recommend-results-panel">
+        <div class="recommend-panel-heading">
+          <div><span class="recommend-panel-kicker">Recommendation</span><h4>Selected Datasets</h4></div>
+          <span id="recommend-sort-status" class="recommend-sort-status">Custom Order</span>
+        </div>
+        <div id="recommend-results-table-wrap" class="recommend-results-table-wrap" role="region" aria-label="Configurable dataset recommendation table" tabindex="0">
+          <table id="recommend-results-table" class="recommend-results-table">
+            <thead id="recommend-results-head"></thead>
+            <tbody id="recommend-results-list"></tbody>
+          </table>
+          <div id="recommend-results-empty" class="recommend-results-empty">Your recommended datasets will appear here.</div>
+        </div>
+        <p class="recommend-table-help"><i class="fa-solid fa-grip-vertical"></i> Drag rows to create a custom order, or select a column heading to sort.</p>
+      </div>
+
+      <aside class="recommend-aps-preview" aria-labelledby="recommend-aps-title">
+        <div class="recommend-panel-heading">
+          <div><span class="recommend-panel-kicker">Algorithm Performance Space</span><h4 id="recommend-aps-title">Dataset Pool Overview</h4></div>
+          <span id="recommend-aps-meta" class="recommend-aps-meta">Waiting for recommendation</span>
+        </div>
+        <div class="recommend-aps-controls" aria-label="Algorithm Performance Space view controls">
+          <div class="recommend-aps-zoom-controls" role="group" aria-label="Zoom controls">
+            <button id="recommend-aps-zoom-out" class="recommend-aps-control-btn" type="button" disabled title="Zoom out">
+              <i class="fa-solid fa-magnifying-glass-minus" aria-hidden="true"></i><span>Zoom Out</span>
+            </button>
+            <button id="recommend-aps-zoom-in" class="recommend-aps-control-btn" type="button" disabled title="Zoom in">
+              <i class="fa-solid fa-magnifying-glass-plus" aria-hidden="true"></i><span>Zoom In</span>
+            </button>
+            <button id="recommend-aps-reset" class="recommend-aps-control-btn is-primary" type="button" disabled title="Fit all pool datasets into the view">
+              <i class="fa-solid fa-expand" aria-hidden="true"></i><span>Fit to Pool</span>
+            </button>
+          </div>
+          <div class="recommend-aps-axis-controls" aria-label="Manual axis ranges">
+            <label for="recommend-aps-x-min"><span>X Min</span><input id="recommend-aps-x-min" type="number" step="any" inputmode="decimal" disabled /></label>
+            <label for="recommend-aps-x-max"><span>X Max</span><input id="recommend-aps-x-max" type="number" step="any" inputmode="decimal" disabled /></label>
+            <label for="recommend-aps-y-min"><span>Y Min</span><input id="recommend-aps-y-min" type="number" step="any" inputmode="decimal" disabled /></label>
+            <label for="recommend-aps-y-max"><span>Y Max</span><input id="recommend-aps-y-max" type="number" step="any" inputmode="decimal" disabled /></label>
+            <button id="recommend-aps-apply-range" class="recommend-aps-control-btn" type="button" disabled>Apply Range</button>
+          </div>
+        </div>
+        <div class="recommend-aps-chart-wrap">
+          <canvas id="recommend-aps-chart" aria-label="Algorithm Performance Space showing pool and selected datasets"></canvas>
+          <div id="recommend-aps-empty" class="recommend-aps-empty"><i class="fa-solid fa-chart-scatter"></i><span>Generate a recommendation to display the dataset pool.</span></div>
+        </div>
+        <div class="recommend-aps-legend" aria-label="APS dataset status legend">
+          <span><i class="is-pool"></i> Pool</span>
+          <span><i class="is-recommended"></i> Recommended</span>
+          <span><i class="is-required"></i> Required</span>
+        </div>
+        <p id="recommend-aps-note" class="recommend-aps-note">The preview uses the APS metric and K-value selected in Step 2.</p>
+      </aside>
+    </div>
 
     <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
-          <div class="modal-header"><div><span class="recommend-eyebrow">Dataset Recommendation</span><h5 class="modal-title" id="exportModalLabel">Export Preview</h5></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+          <div class="modal-header"><div><span class="recommend-eyebrow">FINALLY</span><h5 class="modal-title" id="exportModalLabel">Export Preview</h5></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
           <div class="modal-body"><div id="export-preview-area"></div><div id="export-image-preview" class="mt-3"></div><textarea id="export-textarea" class="form-control mt-3" style="display: none" rows="10" readonly></textarea></div>
           <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button type="button" class="btn btn-primary" id="export-copy-btn">Copy</button><button type="button" class="btn btn-success" id="export-download-btn">Download</button></div>
         </div>
