@@ -559,15 +559,18 @@ var metadataRangeFields = [
 var metadataRangeBounds = {};
 
 export async function initialize(queryOptions) {
-  datasets = await ApiService.getDatasets();
-
-  ApiService.getAlgorithms().then(function (a) {
-    __allAlgorithms = a;
-    var allIds = datasets.map(function (d) { return d.id; });
-    return ApiService.getPerformanceResults(allIds, a.map(function (ai) { return ai.id; }));
-  }).then(function (r) {
-    __performanceResults = r;
-  });
+  var initialData = await Promise.all([ApiService.getDatasets(), ApiService.getAlgorithms()]);
+  datasets = initialData[0] || [];
+  __allAlgorithms = initialData[1] || [];
+  if (__allAlgorithms.length > 0 && datasets.length > 0) {
+    var allIds = datasets.map(function (dataset) { return dataset.id; });
+    __performanceResults = await ApiService.getPerformanceResults(
+      allIds,
+      __allAlgorithms.map(function (algorithm) { return algorithm.id; }),
+    );
+  } else {
+    __performanceResults = null;
+  }
 
   mapElements();
 
@@ -752,8 +755,11 @@ function initializeSettingsFromQuery(queryOptions) {
   }
 
   if (queryOptions?.method && methodSelectElement) {
-    if (methodSelectElement.querySelector('option[value="' + queryOptions.method + '"]')) {
-      methodSelectElement.value = queryOptions.method;
+    var requestedMethod = queryOptions.method === "non_diverse"
+      ? "non_diverse_effcov"
+      : queryOptions.method;
+    if (methodSelectElement.querySelector('option[value="' + requestedMethod + '"]')) {
+      methodSelectElement.value = requestedMethod;
     }
   }
   if (queryOptions?.metric && metricSelectElement) {
@@ -1650,7 +1656,7 @@ function applyDatasetFilter() {
 
 function getSelectedMethod() {
   if (methodSelectElement) return methodSelectElement.value;
-  return "non_diverse";
+  return "non_diverse_effcov";
 }
 
 function buildApsVectors(datasetIds) {
@@ -1665,14 +1671,18 @@ function buildApsVectors(datasetIds) {
   for (var di = 0; di < datasetIds.length; di++) {
     var id = datasetIds[di];
     var row = algorithmIds.map(function (aid) {
-      return __performanceResults[id]?.[aid]?.[metric]?.[perfKey] ?? NaN;
+      var rawValue = __performanceResults[id]?.[aid]?.[metric]?.[perfKey];
+      var value = rawValue === null || rawValue === undefined || rawValue === ""
+        ? NaN
+        : Number(rawValue);
+      return Number.isFinite(value) ? value : NaN;
     });
     var hasSomeFinite = row.some(function (v) { return Number.isFinite(v); });
     if (!hasSomeFinite) continue;
     vectors.push(row);
     validIds.push(id);
   }
-  if (vectors.length < 2) return null;
+  if (vectors.length === 0) return null;
   var dims = algorithmIds.length;
   for (var j = 0; j < dims; j++) {
     var colVals = [];
@@ -1684,23 +1694,6 @@ function buildApsVectors(datasetIds) {
       : 0;
     for (var i = 0; i < vectors.length; i++) {
       if (!Number.isFinite(vectors[i][j])) vectors[i][j] = mean;
-    }
-  }
-  for (var j = 0; j < dims; j++) {
-    var min = Infinity, max = -Infinity;
-    for (var i = 0; i < vectors.length; i++) {
-      if (vectors[i][j] < min) min = vectors[i][j];
-      if (vectors[i][j] > max) max = vectors[i][j];
-    }
-    var range = max - min;
-    if (range > 1e-12) {
-      for (var i = 0; i < vectors.length; i++) {
-        vectors[i][j] = (vectors[i][j] - min) / range;
-      }
-    } else {
-      for (var i = 0; i < vectors.length; i++) {
-        vectors[i][j] = 0;
-      }
     }
   }
   return { vectors: vectors, datasetIds: validIds };
@@ -1739,7 +1732,9 @@ function generateRecommendation() {
     });
 
     var selectedRecommendations;
-    if (method === "random") {
+    if (missingCount === 0) {
+      selectedRecommendations = [];
+    } else if (method === "random") {
       poolWithoutRequired = shuffleArray(poolWithoutRequired);
       selectedRecommendations = poolWithoutRequired
         .slice(0, missingCount)
@@ -1747,37 +1742,30 @@ function generateRecommendation() {
         .sort(function (a, b) { return a - b; });
     } else {
       var poolIds = poolWithoutRequired.map(function (d) { return d.id; });
-      var apsData = buildApsVectors(poolIds);
-      if (apsData && apsData.vectors.length >= 2 && apsData.vectors[0].length > 0) {
+      var apsDatasetIds = uniqueIds(requiredUnique.concat(poolIds));
+      var apsData = buildApsVectors(apsDatasetIds);
+      if (apsData && apsData.vectors.length > 0 && apsData.vectors[0].length > 0) {
         selectedRecommendations = selectDatasetSet(
           apsData.vectors,
           apsData.datasetIds,
           missingCount,
           method,
+          requiredUnique,
         );
-        var usedMap = {};
-        for (var si = 0; si < selectedRecommendations.length; si++) {
-          usedMap[selectedRecommendations[si]] = true;
-        }
-        var remaining = poolIds.filter(function (id) { return !usedMap[id]; });
-        var shuffled = shuffleArray(remaining);
-        while (selectedRecommendations.length < missingCount && shuffled.length > 0) {
-          selectedRecommendations.push(shuffled.pop());
-        }
+        selectedRecommendations = selectedRecommendations.filter(function (id) {
+          return poolIds.includes(id);
+        });
         selectedRecommendations.sort(function (a, b) { return a - b; });
       } else {
-        poolWithoutRequired = shuffleArray(poolWithoutRequired);
-        selectedRecommendations = poolWithoutRequired
-          .slice(0, missingCount)
-          .map(function (d) { return d.id; })
-          .sort(function (a, b) { return a - b; });
+        selectedRecommendations = [];
+        warningText = "APS performance data is unavailable for the selected metric and K-value. No random fallback was used.";
       }
     }
 
     recommendedDatasetIds = selectedRecommendations;
     finalDatasetIds = requiredUnique.concat(selectedRecommendations);
 
-    if (selectedRecommendations.length < missingCount) {
+    if (selectedRecommendations.length < missingCount && !warningText) {
       warningText = "Not enough candidate datasets to reach your target count with current filters.";
     }
 
@@ -2684,7 +2672,7 @@ function shareRecommendState() {
   }
 
   var method = getSelectedMethod();
-  if (method !== "non_diverse") queryData.method = method;
+  if (method !== "non_diverse_effcov") queryData.method = method;
   if (metricSelectElement && metricSelectElement.value !== "ndcg") queryData.metric = metricSelectElement.value;
   if (kValueSelectElement && kValueSelectElement.value !== "10") queryData.kValue = kValueSelectElement.value;
 

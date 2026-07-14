@@ -8,6 +8,10 @@ export class ApiService {
       if (!response.ok) return null;
 
       const data = await response.json();
+      data.data.forEach((algorithm) => {
+        const id = Number(algorithm.id);
+        if (Number.isFinite(id)) algorithm.id = id;
+      });
       data.data.sort((a, b) => a.name.localeCompare(b.name));
       this.#algorithms = data.data;
     }
@@ -29,6 +33,10 @@ export class ApiService {
       if (!response.ok) return null;
 
       const data = await response.json();
+      data.data.forEach((dataset) => {
+        const id = Number(dataset.id);
+        if (Number.isFinite(id)) dataset.id = id;
+      });
       data.data.sort((a, b) => a.name.localeCompare(b.name));
       this.#datasets = data.data;
     }
@@ -50,6 +58,10 @@ export class ApiService {
       if (!response.ok) return null;
 
       const data = await response.json();
+      data.data.forEach((result) => {
+        const datasetId = Number(result.datasetId);
+        if (Number.isFinite(datasetId)) result.datasetId = datasetId;
+      });
       this.#pcaResults = data.data;
     }
 
@@ -97,7 +109,51 @@ export class ApiService {
       if (!response.ok) return null;
 
       const data = await response.json();
+      const groupedResults = new Map();
       data.data.forEach((result) => {
+        const groupKey = `${result.datasetId}:${result.algorithmId}`;
+        if (!groupedResults.has(groupKey)) {
+          groupedResults.set(groupKey, {
+            base: { ...result },
+            configurations: 0,
+            sums: {},
+            counts: {},
+          });
+        }
+        const group = groupedResults.get(groupKey);
+        group.configurations += 1;
+        ["hr", "ndcg", "recall"].forEach((metric) => {
+          const metricValues = result[metric] || {};
+          Object.keys(metricValues).forEach((cutoff) => {
+            const value = Number(metricValues[cutoff]);
+            if (!Number.isFinite(value)) return;
+            const valueKey = `${metric}:${cutoff}`;
+            group.sums[valueKey] = (group.sums[valueKey] || 0) + value;
+            group.counts[valueKey] = (group.counts[valueKey] || 0) + 1;
+          });
+        });
+      });
+
+      groupedResults.forEach((group) => {
+        const result = { ...group.base };
+        const datasetId = Number(result.datasetId);
+        const algorithmId = Number(result.algorithmId);
+        if (Number.isFinite(datasetId)) result.datasetId = datasetId;
+        if (Number.isFinite(algorithmId)) result.algorithmId = algorithmId;
+        ["hr", "ndcg", "recall"].forEach((metric) => {
+          result[metric] = {};
+          const sourceValues = group.base[metric] || {};
+          Object.keys(sourceValues).forEach((cutoff) => {
+            const valueKey = `${metric}:${cutoff}`;
+            result[metric][cutoff] = group.counts[valueKey]
+              ? group.sums[valueKey] / group.counts[valueKey]
+              : null;
+          });
+        });
+        if (group.configurations > 1) {
+          result.algorithmConfigIndex = null;
+          result.algorithmConfiguration = `Mean of ${group.configurations} configurations`;
+        }
         if (this.#performanceResults[result.datasetId] === undefined) {
           this.#performanceResults[result.datasetId] = {};
         }
