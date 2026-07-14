@@ -108,14 +108,12 @@ function renderDashboard(data) {
   renderChart("metrics", "metrics-chart", "bar", data.metrics, barOptions("Requests", palette[2]));
   renderChart("hourly", "hourly-chart", "bar", data.hourly, barOptions("Requests", palette[1]));
   renderChart("weekdays", "weekday-chart", "bar", data.weekdays, barOptions("Requests", palette[3]));
-  renderChart("results", "results-chart", "bar", data.resultDistribution, barOptions("Requests", palette[4]));
   renderChart("kValues", "k-values-chart", "bar", data.kValues, barOptions("Requests", palette[5]));
 
   renderRanking("top-seeds", data.topSeedDatasets);
   renderRanking("top-filtered", data.topFilteredDatasets);
   renderRanking("top-recommended", data.topRecommendedDatasets);
   renderRanking("filter-usage", data.filterUsage);
-  renderRanking("feedback-types", data.feedbackTypes);
   renderResultSummary(data.kpis);
 }
 
@@ -125,14 +123,14 @@ function renderKpis(kpis) {
     ? "No prior-week baseline"
     : `${change >= 0 ? "+" : ""}${formatNumber(change)}% vs previous 7 days`;
   const cards = [
-    ["Total uses", kpis.totalUses, "All recorded requests", "fa-chart-simple", "#eaf0ff", "#3568d4"],
+    ["Total Uses", kpis.totalUses, "All recorded requests", "fa-chart-simple", "#eaf0ff", "#3568d4"],
     ["Today", kpis.todayUses, "Requests since midnight", "fa-calendar-day", "#e5f7f3", "#208b79"],
-    ["Last 7 days", kpis.last7Days, changeText, "fa-arrow-trend-up", "#f0ebff", "#7656c9"],
-    ["Last 30 days", kpis.last30Days, "Recent request volume", "fa-calendar", "#fff3df", "#b97716"],
-    ["Total results", kpis.totalResults, "Recommendations returned", "fa-layer-group", "#fdecef", "#c74761"],
-    ["Average results", kpis.averageResults, `Median ${formatNumber(kpis.medianResults)}`, "fa-scale-balanced", "#eaf3f7", "#477387"],
-    ["Average seeds", kpis.averageSeeds, "Seed datasets per request", "fa-seedling", "#edf7ed", "#4a8a56"],
-    ["Average candidates", kpis.averageCandidates, `Avg. recommendations ${formatNumber(kpis.averageRecommendations)}`, "fa-filter", "#f8eee8", "#9a633f"],
+    ["Last 7 Days", kpis.last7Days, changeText, "fa-arrow-trend-up", "#f0ebff", "#7656c9"],
+    ["Last 30 Days", kpis.last30Days, "Recent request volume", "fa-calendar", "#fff3df", "#b97716"],
+    ["Total Results", kpis.totalResults, "Recommendations returned", "fa-layer-group", "#fdecef", "#c74761"],
+    ["Average Results", kpis.averageResults, `Median ${formatNumber(kpis.medianResults)}`, "fa-scale-balanced", "#eaf3f7", "#477387"],
+    ["Average Seeds", kpis.averageSeeds, "Seed datasets per request", "fa-seedling", "#edf7ed", "#4a8a56"],
+    ["Average Candidates", kpis.averageCandidates, `Avg. recommendations ${formatNumber(kpis.averageRecommendations)}`, "fa-filter", "#f8eee8", "#9a633f"],
   ];
   document.getElementById("kpi-grid").innerHTML = cards.map(([label, value, note, icon, tint, color]) => `
     <article class="kpi-card" style="--kpi-tint:${tint};--kpi-color:${color}">
@@ -208,12 +206,12 @@ function renderRanking(elementId, items) {
 
 function renderResultSummary(kpis) {
   const values = [
-    ["Minimum results", kpis.minimumResults],
-    ["Maximum results", kpis.maximumResults],
-    ["Median results", kpis.medianResults],
-    ["Average recommendations", kpis.averageRecommendations],
-    ["First recorded use", formatDate(kpis.firstUse)],
-    ["Most recent use", formatDate(kpis.lastUse)],
+    ["Minimum Results", kpis.minimumResults],
+    ["Maximum Results", kpis.maximumResults],
+    ["Median Results", kpis.medianResults],
+    ["Average Recommendations", kpis.averageRecommendations],
+    ["First Recorded Use", formatDate(kpis.firstUse)],
+    ["Most Recent Use", formatDate(kpis.lastUse)],
   ];
   document.getElementById("result-summary").innerHTML = values
     .map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(String(typeof value === "number" ? formatNumber(value) : value))}</dd>`)
@@ -311,12 +309,12 @@ function showLogDetails(id) {
   document.getElementById("log-detail-title").textContent = `Log #${log.id} · ${formatDate(log.createdDate)}`;
   document.getElementById("log-detail-body").innerHTML = `
     <div class="detail-grid">
-      <section class="detail-section"><h3>Configuration</h3><dl class="summary-list p-0"><dt>Method</dt><dd>${escapeHtml(log.selectionMethod || "—")}</dd><dt>Metric</dt><dd>${escapeHtml(log.selectionMetric || "—")}</dd><dt>K value</dt><dd>${escapeHtml(log.selectionKValue === null ? "—" : String(log.selectionKValue))}</dd><dt>Result count</dt><dd>${formatNumber(log.resultCount)}</dd></dl></section>
-      <section class="detail-section"><h3>Dataset counts</h3><dl class="summary-list p-0"><dt>Seeds</dt><dd>${formatNumber(log.seedDatasets.length)}</dd><dt>Candidates</dt><dd>${formatNumber(log.datasetFilter.length)}</dd><dt>Recommendations</dt><dd>${formatNumber(log.recommendedDatasets.length)}</dd></dl></section>
-      <section class="detail-section"><h3>Seed datasets</h3><p>${escapeHtml(datasetNames(log.seedDatasets))}</p></section>
-      <section class="detail-section"><h3>Recommended datasets</h3><p>${escapeHtml(datasetNames(log.recommendedDatasets))}</p></section>
+      <section class="detail-section"><h3>Configuration</h3><dl class="summary-list p-0"><dt>Method</dt><dd>${escapeHtml(log.selectionMethod || "—")}</dd><dt>Metric</dt><dd>${escapeHtml(log.selectionMetric || "—")}</dd><dt>K Value</dt><dd>${escapeHtml(log.selectionKValue === null ? "—" : String(log.selectionKValue))}</dd><dt>Result Count</dt><dd>${formatNumber(log.resultCount)}</dd></dl></section>
+      <section class="detail-section"><h3>Dataset Counts</h3><dl class="summary-list p-0"><dt>Seeds</dt><dd>${formatNumber(log.seedDatasets.length)}</dd><dt>Candidates</dt><dd>${formatNumber(log.datasetFilter.length)}</dd><dt>Recommendations</dt><dd>${formatNumber(log.recommendedDatasets.length)}</dd></dl></section>
+      <section class="detail-section"><h3>Seed Datasets</h3><p>${escapeHtml(datasetNames(log.seedDatasets))}</p></section>
+      <section class="detail-section"><h3>Recommended Datasets</h3><p>${escapeHtml(datasetNames(log.recommendedDatasets))}</p></section>
       <section class="detail-section detail-section-wide"><h3>Filters</h3><pre>${escapeHtml(JSON.stringify(log.filters, null, 2))}</pre></section>
-      <section class="detail-section detail-section-wide"><h3>Candidate dataset IDs</h3><pre>${escapeHtml(JSON.stringify(log.datasetFilter, null, 2))}</pre></section>
+      <section class="detail-section detail-section-wide"><h3>Candidate Dataset IDs</h3><pre>${escapeHtml(JSON.stringify(log.datasetFilter, null, 2))}</pre></section>
     </div>`;
   state.detailModal.show();
 }

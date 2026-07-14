@@ -103,7 +103,6 @@ function buildSummary($pdo) {
     $filteredDatasets = [];
     $recommendedDatasets = [];
     $filterUsage = [];
-    $feedbackTypes = [];
     $resultCounts = [];
     $totalSeeds = 0;
     $totalCandidates = 0;
@@ -154,11 +153,10 @@ function buildSummary($pdo) {
         $totalRecommendations += count($recommendations);
 
         if (!empty($filters['feedbackType']) && $filters['feedbackType'] !== 'all') {
-            incrementCount($filterUsage, 'Feedback type');
-            incrementCount($feedbackTypes, $filters['feedbackType']);
+            incrementCount($filterUsage, 'Feedback Type');
         }
         if (hasRange($filters['interactions'] ?? null)) {
-            incrementCount($filterUsage, 'Interactions range');
+            incrementCount($filterUsage, 'Interactions Range');
         }
         if (!empty($filters['metadataRanges']) && is_array($filters['metadataRanges'])) {
             foreach ($filters['metadataRanges'] as $key => $range) {
@@ -167,13 +165,6 @@ function buildSummary($pdo) {
                 }
             }
         }
-        if (array_key_exists('targetCount', $filters)) {
-            incrementCount($filterUsage, 'Target count');
-        }
-        if (array_key_exists('candidatePoolSize', $filters)) {
-            incrementCount($filterUsage, 'Candidate pool size');
-        }
-
         $resultCounts[] = (int)$row['ResultCount'];
     }
 
@@ -186,15 +177,6 @@ function buildSummary($pdo) {
         $median = $total % 2 === 0
             ? ($resultCounts[$middle - 1] + $resultCounts[$middle]) / 2
             : $resultCounts[$middle];
-    }
-
-    $resultDistribution = ['0' => 0, '1-5' => 0, '6-10' => 0, '11-20' => 0, '21+' => 0];
-    foreach ($resultCounts as $count) {
-        if ($count === 0) $resultDistribution['0']++;
-        elseif ($count <= 5) $resultDistribution['1-5']++;
-        elseif ($count <= 10) $resultDistribution['6-10']++;
-        elseif ($count <= 20) $resultDistribution['11-20']++;
-        else $resultDistribution['21+']++;
     }
 
     $activity = [];
@@ -240,14 +222,10 @@ function buildSummary($pdo) {
         'methods' => rankedCounts($methods, [], 20),
         'metrics' => rankedCounts($metrics, [], 20),
         'kValues' => rankedCounts($kValues, [], 20),
-        'resultDistribution' => array_map(function ($label) use ($resultDistribution) {
-            return ['label' => $label, 'count' => $resultDistribution[$label]];
-        }, array_keys($resultDistribution)),
         'topSeedDatasets' => rankedCounts($seedDatasets, $datasetNames),
         'topFilteredDatasets' => rankedCounts($filteredDatasets, $datasetNames),
         'topRecommendedDatasets' => rankedCounts($recommendedDatasets, $datasetNames),
         'filterUsage' => rankedCounts($filterUsage, [], 30),
-        'feedbackTypes' => rankedCounts($feedbackTypes, [], 20),
         'datasetNames' => $datasetNames,
     ];
 }
