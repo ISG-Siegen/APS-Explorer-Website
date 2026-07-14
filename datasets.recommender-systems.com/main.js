@@ -12,41 +12,7 @@ export const versionNumber = "1.0";
 document.addEventListener("DOMContentLoaded", async () => {
   tabContentElement = document.getElementById("tabContent");
 
-  const compareAlgorithmsBtn = document.getElementById("compare-algo-btn");
-  const compareDatasetsBtn = document.getElementById("compare-datasets-btn");
-  const apsTabBtn = document.getElementById("aps-tab-btn");
-  const recommendDatasetsBtn = document.getElementById(
-    "recommend-datasets-btn",
-  );
-
-  apsTabBtn.addEventListener("click", async (e) => {
-    await loadTab("./tabs/aps/aps.html");
-  });
-  compareAlgorithmsBtn.addEventListener("click", async (e) => {
-    await loadTab("./tabs/compareAlgorithms/compareAlgorithms.html");
-  });
-  compareDatasetsBtn.addEventListener("click", async (e) => {
-    await loadTab("./tabs/compareDatasets/compareDatasets.html");
-  });
-  recommendDatasetsBtn.addEventListener("click", async (e) => {
-    await loadTab("./tabs/recommendDatasets/recommendDatasets.html");
-  });
-  const queryOptions = readQueryString(window.location.search);
-
-  if (queryOptions.tab) {
-    const tabName = queryOptions.tab;
-    if (tabName === "recommendDatasets") {
-      recommendDatasetsBtn.click();
-    } else if (tabName === "compareAlgorithms") {
-      compareAlgorithmsBtn.click();
-    } else if (tabName === "compareDatasets") {
-      compareDatasetsBtn.click();
-    } else if (tabName === "aps") {
-      apsTabBtn.click();
-    }
-  } else {
-    recommendDatasetsBtn.click();
-  }
+  await loadTab("./tabs/recommendDatasets/recommendDatasets.html");
 
   const versionNumberElement = document.getElementById("version-number");
   versionNumberElement.textContent = "Version " + versionNumber;

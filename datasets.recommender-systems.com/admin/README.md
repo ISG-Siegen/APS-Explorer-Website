@@ -1,4 +1,4 @@
-# APS Explorer Admin deployment
+# FINALLY Admin deployment
 
 The complete `admin/` directory is protected with Apache HTTP Basic Authentication.
 The configured username is `admin`; the password hash must not be committed to Git.

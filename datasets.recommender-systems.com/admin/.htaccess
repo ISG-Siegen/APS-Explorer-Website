@@ -1,7 +1,7 @@
 Options -Indexes
 
 AuthType Basic
-AuthName "APS Explorer Administration"
+AuthName "FINALLY Administration"
 AuthBasicProvider file
 AuthUserFile "/www/htdocs/w0216ee9/configs/admin.htpasswd"
 Require user admin

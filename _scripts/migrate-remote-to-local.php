@@ -4,7 +4,7 @@
  * Usage: php _scripts/migrate-remote-to-local.php
  */
 
-$remoteBaseUrl = 'https://datasets.recommender-systems.com/index.php?action=';
+$remoteBaseUrl = 'https://finally.recommender-systems.com/index.php?action=';
 $localDbConfig = __DIR__ . '/../configs/db_config.php';
 
 $dbConfig = include($localDbConfig);

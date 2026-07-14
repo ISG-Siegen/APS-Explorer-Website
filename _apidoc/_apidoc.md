@@ -1,7 +1,7 @@
 # Datasets Recommender Systems API Documentation
 
 ## Base URL
-The base URL for all requests is: `https://datasets.recommender-systems.com`
+The base URL for all requests is: `https://finally.recommender-systems.com`
 
 ## Response Structure
 Every HTTP request to the backend will return in one of these specified formats.

@@ -47,7 +47,7 @@ def addPerformanceResults():
     }).reset_index()
 
     # Prepare HTTP call
-    url = 'https://datasets.recommender-systems.com/index.php?action=admin&task=addResults'
+    url = 'https://finally.recommender-systems.com/index.php?action=admin&task=addResults'
     headers = {
         'Content-Type': 'application/json',
         ADMIN_HEADER: ADMIN_SECRET_KEY
@@ -126,7 +126,7 @@ def addPerformanceResults():
 
 def updatePca():
     # Fetch performance results
-    url = 'https://datasets.recommender-systems.com/index.php?action=admin&task=getResults'
+    url = 'https://finally.recommender-systems.com/index.php?action=admin&task=getResults'
     headers = {
         'Content-Type': 'application/json',
         ADMIN_HEADER: ADMIN_SECRET_KEY
@@ -224,7 +224,7 @@ def updatePca():
                         result[score][kValue]['varianceY'] = 0
 
     # Update PCA
-    url = 'https://datasets.recommender-systems.com/index.php?action=admin&task=updatePca'
+    url = 'https://finally.recommender-systems.com/index.php?action=admin&task=updatePca'
     headers = {
         'Content-Type': 'application/json',
         ADMIN_HEADER: ADMIN_SECRET_KEY

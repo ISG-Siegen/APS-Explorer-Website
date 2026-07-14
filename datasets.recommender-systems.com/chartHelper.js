@@ -523,7 +523,7 @@ export class ChartHelper {
             const metadata = [
                 `# Chart Data Export`,
                 `# Version: ${versionNumber}`,
-                `# Source: datasets.recommender-systems.com`,
+                `# Source: finally.recommender-systems.com`,
                 `# Export Date: ${new Date().toISOString()}`,
                 `# Chart: ${chartName}`,
                 ``,
@@ -669,7 +669,7 @@ export class ChartHelper {
 
         const margin = 10;
         const versionText = `Version: ${versionNumber}`;
-        const sourceText = 'Source: datasets.recommender-systems.com';
+        const sourceText = 'Source: finally.recommender-systems.com';
 
         ctx.fillText(sourceText, margin, height - 15);
         const versionWidth = ctx.measureText(versionText).width;

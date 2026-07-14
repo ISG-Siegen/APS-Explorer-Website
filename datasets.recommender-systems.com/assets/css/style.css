@@ -2,6 +2,45 @@ body {
   padding-bottom: 60px;
 }
 
+.finally-brand {
+  gap: 0.7rem;
+}
+
+.finally-brand-icon {
+  flex: 0 0 auto;
+  border-radius: 13px;
+  box-shadow: 0 7px 18px rgba(13, 52, 111, 0.18);
+}
+
+.finally-brand-title {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  color: #14294b;
+  font-size: clamp(1.8rem, 3vw, 2.15rem);
+  font-weight: 800;
+  letter-spacing: 0.045em;
+  line-height: 1;
+}
+
+@media (max-width: 575.98px) {
+  .finally-brand {
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  .finally-brand-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .finally-brand-title {
+    height: 40px;
+    font-size: 1.85rem;
+  }
+}
+
 .container {
   position: relative;
   padding: 1rem;
